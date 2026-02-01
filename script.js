@@ -1,351 +1,158 @@
-// IMPORTURI FIREBASE
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyB51CN3Ck0dnvF1TxH3d6gISyrLv2u5OLY",
-  authDomain: "victortigoianuapp.firebaseapp.com",
-  projectId: "victortigoianuapp",
-  storageBucket: "victortigoianuapp.firebasestorage.app",
-  messagingSenderId: "810917431019",
-  appId: "1:810917431019:web:d07c8711a24d7898a160ae"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-// CONFIG
-const trans = {
-    ro: {
-        title: "Victor Tigoianu", active: "Proiecte Active", client: "Date Client",
-        pName: "Nume Client", pAddr: "Adresă Șantier", pDate: "Data Începerii:", pEnd: "Data Finalizării:",
-        specs: "Detalii Teren & Logistică", l: "L (m)", w: "l (m)", s: "Pantă %",
-        mats: "Materiale", photos: "Documentație Foto", area: "Arie:",
-        save: "SALVEAZĂ PROIECT", back: "Înapoi", hint: "Atinge pentru poze",
-        stNew: "NOU", stWork: "ÎN LUCRU", stDone: "FINALIZAT",
-        mdTitle: "Detalii Proiect", mdMat: "Lista Materiale", mdGal: "Galerie Foto", mdNotes: "Note / Extra",
-        mdStatus: "Status Lucrare", mdNav: "Navigație",
-        phMatName: "Caută sau scrie material...", phMatQty: "Cant.",
-        settingsTitle: "Liste", manageMats: "Materiale Existente", manageUnits: "Unități de Măsură",
-        phNewMat: "Material nou...", phNewUnit: "Unitate nouă...",
-        weather: "Cer Senin", loadingWeather: "Se localizează...",
-        days: ["Duminică", "Luni", "Marți", "Miercuri", "Joi", "Vineri", "Sâmbătă"],
-        shortDays: ["Dum", "Lun", "Mar", "Mie", "Joi", "Vin", "Sam"],
-        months: ["Ianuarie", "Februarie", "Martie", "Aprilie", "Mai", "Iunie", "Iulie", "August", "Septembrie", "Octombrie", "Noiembrie", "Decembrie"],
-        
-        lblArea: "Suprafață (mp)", lblPerim: "Perimetru (ml)",
-        lblAccess: "Acces Utilaj", lblDigging: "Tip Săpătură",
-        accessOpts: ["Nu (Pietonal)", "Mini-Excavator", "Mare (Camion)"],
-        diggingOpts: ["Ușoară/Normală", "Grea (Pietriș)", "Moloz/Beton"]
-    },
-    de: {
-        title: "Victor Tigoianu", active: "Aktive Projekte", client: "Kundendaten",
-        pName: "Kundenname", pAddr: "Baustellenadresse", pDate: "Startdatum:", pEnd: "Fertigstellungsdatum:",
-        specs: "Gelände & Logistik", l: "L (m)", w: "B (m)", s: "Neig. %",
-        mats: "Materialien", photos: "Fotodokumentation", area: "Fläche:",
-        save: "PROJEKT SPEICHERN", back: "Zurück", hint: "Tippen für Fotos",
-        stNew: "NEU", stWork: "IN ARBEIT", stDone: "FERTIG",
-        mdTitle: "Projektdetails", mdMat: "Materialliste", mdGal: "Fotogalerie", mdNotes: "Notizen / Extras",
-        mdStatus: "Projektstatus", mdNav: "Navigation",
-        phMatName: "Suchen oder eingeben...", phMatQty: "Menge",
-        settingsTitle: "Listen verwalten", manageMats: "Vorhandene Materialien", manageUnits: "Maßeinheiten",
-        phNewMat: "Neues Material...", phNewUnit: "Neue Einheit...",
-        weather: "Heiter", loadingWeather: "Standort wird gesucht...",
-        days: ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"],
-        shortDays: ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"],
-        months: ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"],
-        
-        lblArea: "Fläche (m²)", lblPerim: "Umfang (lm)",
-        lblAccess: "Maschinenzugang", lblDigging: "Grabungstyp",
-        accessOpts: ["Nein (Fußgänger)", "Minibagger", "Groß (LKW)"],
-        diggingOpts: ["Leicht/Normal", "Schwer (Stein)", "Bauschutt/Beton"]
-    }
-};
-
-let currentLang = 'ro';
-let projects = [];
-let tempMaterialList = [];
-let tempPhotosBase64 = [];
-let currentProjectIndex = null; 
-
-let activeMaterialsRO = ["Gazon Rulou", "Pavaj", "Borduri", "Nisip", "Pământ vegetal", "Sistem Irigații"];
-let activeMaterialsDE = ["Rollrasen", "Pflastersteine", "Randsteine", "Sand", "Mutterboden", "Bewässerung"];
-let activeUnitsRO = ["m²", "m³", "ml", "buc", "kg", "palet"];
-let activeUnitsDE = ["m²", "m³", "lm", "Stk", "kg", "Palette"];
-
-const weatherIcons = {
-    0: "fa-sun", 1: "fa-cloud-sun", 2: "fa-cloud-sun", 3: "fa-cloud",
-    45: "fa-smog", 48: "fa-smog", 51: "fa-cloud-rain", 61: "fa-cloud-rain", 95: "fa-bolt"
-};
-
-function loadRealtimeData() {
-    const q = query(collection(db, "projects"), orderBy("startDate", "desc"));
-    onSnapshot(q, (snapshot) => {
-        projects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        renderDashboard();
-    });
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    loadRealtimeData();
-    changeLanguage('ro');
-    document.getElementById('btn-lang-ro').classList.add('active-lang');
-    updateDateTime(); setInterval(updateDateTime, 1000);
-    getRealWeather();
-    document.getElementById('in-length').addEventListener('input', updateArea);
-    document.getElementById('in-width').addEventListener('input', updateArea);
-});
-
-window.changeLanguage = (l) => {
-    document.getElementById('btn-lang-ro').classList.remove('active-lang');
-    document.getElementById('btn-lang-de').classList.remove('active-lang');
-    document.getElementById('btn-lang-' + l).classList.add('active-lang');
-
-    currentLang = l; const t = trans[l];
+:root {
+    --primary: #00b09b; --secondary: #96c93d; --accent: #ff5f6d;
+    --dark: #2c3e50; --light-bg: #f8f9fa;
+    /* GRADIENT VERDE-MENTĂ PROASPĂT */
+    --gradient: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);
+    --bg-gradient: linear-gradient(180deg, #d4fc79 0%, #96e6a1 100%);
     
-    document.getElementById('label-active-projects').innerText = t.active;
-    document.getElementById('form-title').innerText = l === 'ro' ? "Șantier Nou" : "Neue Baustelle";
-    document.getElementById('label-client-data').innerHTML=`<i class="fas fa-user-circle"></i> ${t.client}`;
-    document.getElementById('in-name').placeholder=t.pName;
-    document.getElementById('in-address').placeholder=t.pAddr;
-    document.getElementById('label-start-date').innerText=t.pDate;
-    document.getElementById('label-specs').innerHTML=`<i class="fas fa-drafting-compass"></i> ${t.specs}`;
-    document.getElementById('in-length').placeholder=t.l;
-    document.getElementById('in-width').placeholder=t.w;
-    document.getElementById('in-slope').placeholder=t.s;
-    document.getElementById('lbl-area').innerText = t.lblArea;
-    document.getElementById('lbl-perim').innerText = t.lblPerim;
-    document.getElementById('lbl-access').innerText = t.lblAccess;
-    document.getElementById('lbl-digging').innerText = t.lblDigging;
-    document.getElementById('label-materials').innerHTML=`<i class="fas fa-boxes"></i> ${t.mats}`;
-    document.getElementById('in-mat-name').placeholder=t.phMatName;
-    document.getElementById('in-mat-qty').placeholder=t.phMatQty;
-    document.getElementById('label-photos').innerHTML=`<i class="fas fa-images"></i> ${t.photos}`;
-    document.getElementById('label-upload-hint').innerText=t.hint;
-    document.getElementById('label-notes').innerHTML=`<i class="fas fa-sticky-note"></i> ${t.mdNotes}`;
-    document.getElementById('btn-save').innerText=t.save;
-    document.getElementById('btn-back-text').innerText=t.back;
-    document.getElementById('modal-title').innerText=t.mdTitle;
-    document.getElementById('settings-title').innerText=t.settingsTitle;
-    document.getElementById('lbl-manage-mats').innerText=t.manageMats;
-    document.getElementById('new-mat-input').placeholder=t.phNewMat;
-    document.getElementById('lbl-manage-units').innerText=t.manageUnits;
-    document.getElementById('new-unit-input').placeholder=t.phNewUnit;
-
-    const sAccess = document.getElementById('in-access'); sAccess.innerHTML = "";
-    t.accessOpts.forEach(o => { sAccess.innerHTML += `<option value="${o}">${o}</option>` });
-    const sDig = document.getElementById('in-digging'); sDig.innerHTML = "";
-    t.diggingOpts.forEach(o => { sDig.innerHTML += `<option value="${o}">${o}</option>` });
-
-    updateDatalist();
-    updateUnitSelect();
-    renderDashboard();
-    updateDateTime();
-    getRealWeather();
-};
-
-function updateDatalist() {
-    const dl = document.getElementById('dl-materials'); dl.innerHTML="";
-    const list = currentLang === 'ro' ? activeMaterialsRO : activeMaterialsDE;
-    list.forEach(m => { dl.innerHTML += `<option value="${m}">` });
-    
-    const setList = document.getElementById('settings-mat-list'); setList.innerHTML = "";
-    list.forEach((m, i) => {
-        setList.innerHTML += `<li>${m} <button onclick="window.delItem('mat',${i})" style="color:red;border:none;background:none"><i class="fas fa-trash"></i></button></li>`;
-    });
+    --status-new: #2196F3; --status-work: #FF9800; --status-done: #4CAF50;
+    --danger: #e74c3c;
 }
 
-function updateUnitSelect() {
-    const s = document.getElementById('in-mat-unit'); s.innerHTML = "";
-    const list = currentLang === 'ro' ? activeUnitsRO : activeUnitsDE;
-    list.forEach(u => {
-        const o = document.createElement('option'); o.value = u; o.text = u; s.appendChild(o);
-    });
-    
-    const setList = document.getElementById('settings-unit-list'); setList.innerHTML = "";
-    list.forEach((u, i) => {
-        setList.innerHTML += `<li>${u} <button onclick="window.delItem('unit',${i})" style="color:red;border:none;background:none"><i class="fas fa-trash"></i></button></li>`;
-    });
+body {
+    margin: 0; font-family: -apple-system, system-ui, sans-serif;
+    background: var(--bg-gradient); 
+    background-attachment: fixed; /* Fixat pe tot ecranul */
+    background-size: cover;
+    color: #333; padding-bottom: 120px;
+    text-align: left; min-height: 100vh;
 }
 
-window.addMaterial = () => {
-    const n = document.getElementById('in-mat-name').value;
-    const q = document.getElementById('in-mat-qty').value;
-    const u = document.getElementById('in-mat-unit').value;
-    if(n) {
-        tempMaterialList.push({name:n, qty:q, unit:u});
-        const li = document.createElement('li'); 
-        li.innerHTML = `<span>${n}</span> <span>${q} ${u}</span>`;
-        document.getElementById('mat-list').appendChild(li);
-        document.getElementById('in-mat-name').value = "";
-    }
-};
+.hidden { display: none !important; }
 
-window.addCustomItem = (type) => {
-    const id = type === 'material' ? 'new-mat-input' : 'new-unit-input';
-    const val = document.getElementById(id).value.trim();
-    if(val) {
-        if(type === 'material') {
-            (currentLang === 'ro' ? activeMaterialsRO : activeMaterialsDE).push(val);
-            updateDatalist();
-        } else {
-            (currentLang === 'ro' ? activeUnitsRO : activeUnitsDE).push(val);
-            updateUnitSelect();
-        }
-        document.getElementById(id).value = "";
-    }
-};
+/* HEADER STICLĂ */
+.app-header {
+    background: rgba(255, 255, 255, 0.45); 
+    backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+    padding: 25px 20px;
+    border-bottom-left-radius: 35px; border-bottom-right-radius: 35px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid rgba(255,255,255,0.5);
+}
+.header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.header-logo-img { height: 90px; width: auto; object-fit: contain; }
 
-window.delItem = (type, index) => {
-    if(confirm("Stergi?")) {
-        if(type === 'mat') {
-            (currentLang === 'ro' ? activeMaterialsRO : activeMaterialsDE).splice(index, 1);
-            updateDatalist();
-        } else {
-            (currentLang === 'ro' ? activeUnitsRO : activeUnitsDE).splice(index, 1);
-            updateUnitSelect();
-        }
-    }
-};
-
-function updateArea(){ 
-    const l=parseFloat(document.getElementById('in-length').value)||0; 
-    const w=parseFloat(document.getElementById('in-width').value)||0; 
-    if(l>0 && w>0) document.getElementById('in-area').value = (l*w).toFixed(2);
+/* BUTOANE LIMBĂ CU IMPULS */
+.lang-selector button {
+    background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.8);
+    color: #333; padding: 8px 14px; border-radius: 12px; font-weight: 800; 
+    margin-left: 8px; cursor: pointer; 
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+}
+.lang-selector button:active { transform: scale(0.9); }
+.lang-selector button.active-lang { 
+    background: var(--primary); color: white; border-color: transparent;
+    transform: scale(1.15); box-shadow: 0 5px 15px rgba(0, 176, 155, 0.4); z-index: 10;
 }
 
-window.getLocationForAddress = () => {
-    const field = document.getElementById('in-address');
-    if (navigator.geolocation) {
-        field.placeholder = "Se caută...";
-        navigator.geolocation.getCurrentPosition(pos => {
-            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`)
-                .then(r => r.json()).then(d => {
-                    const a = d.address;
-                    const street = a.road || a.pedestrian || "";
-                    const nr = a.house_number || "";
-                    const city = a.city || a.town || a.village || "";
-                    field.value = `${street} ${nr}, ${city}`.trim().replace(/^,/, '').trim();
-                });
-        });
-    }
-};
-
-function getRealWeather() {
-    let lat = 45.65, lon = 25.60;
-    const fetchW = (la, lo) => {
-        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&current_weather=true&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=4`)
-        .then(r=>r.json()).then(d => {
-            if(d.current_weather){
-                document.getElementById('display-temp').innerText = `${Math.round(d.current_weather.temperature)}°C`;
-                const c = d.current_weather.weathercode;
-                document.getElementById('weather-icon-main').className = `fas ${weatherIcons[c]||"fa-cloud"}`;
-                if(d.daily){
-                    const l=document.getElementById('forecast-list'); l.innerHTML="";
-                    for(let i=1; i<=3; i++){
-                        const dt=new Date(d.daily.time[i]);
-                        const dn=trans[currentLang].shortDays[dt.getDay()];
-                        const mx=Math.round(d.daily.temperature_2m_max[i]);
-                        const mn=Math.round(d.daily.temperature_2m_min[i]);
-                        const ic=weatherIcons[d.daily.weathercode[i]]||"fa-cloud";
-                        l.innerHTML+=`<div class="forecast-day"><span class="f-day">${dn}</span><i class="fas ${ic} f-icon"></i><span class="f-temp">${mx}°/${mn}°</span></div>`;
-                    }
-                }
-            }
-        });
-    };
-    if(navigator.geolocation) navigator.geolocation.getCurrentPosition(p=>fetchW(p.coords.latitude, p.coords.longitude), ()=>fetchW(lat,lon));
-    else fetchW(lat,lon);
+/* WIDGET VREME */
+.dashboard-widget {
+    background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(5px); padding: 15px 20px;
+    border-radius: 20px; display: flex; justify-content: space-between; align-items: flex-start; 
+    border: 1px solid rgba(255, 255, 255, 0.7); box-shadow: 0 4px 10px rgba(0,0,0,0.02);
 }
+.date-time-container h2 { margin: 0; font-size: 0.9rem; opacity: 0.9; } 
+.date-time-container p { margin: 0; font-size: 1.8rem; font-weight: 800; line-height: 1.2; }
+.weather-container { text-align: right; display: flex; flex-direction: column; gap: 5px; }
+.weather-current { display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
+.weather-current i { font-size: 2rem; color: var(--primary); }
+.weather-text span { font-size: 1.4rem; font-weight: bold; display: block; line-height: 1; }
+.forecast-mini { display: flex; gap: 8px; justify-content: flex-end; margin-top: 5px; }
+.forecast-day { text-align: center; background: rgba(255,255,255,0.6); padding: 4px 8px; border-radius: 8px; }
+.f-day { font-size: 0.65rem; font-weight: bold; display: block; opacity: 0.7; text-transform: uppercase; }
+.f-icon { font-size: 0.9rem; margin: 2px 0; display: block; color: var(--secondary); }
+.f-temp { font-size: 0.75rem; font-weight: bold; }
 
-function updateDateTime(){
-    const n=new Date(); const t=trans[currentLang];
-    document.getElementById('display-date').innerText=`${t.days[n.getDay()]}, ${n.getDate()} ${t.months[n.getMonth()]}`;
-    document.getElementById('display-time').innerText=n.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-}
+/* LAYOUT & CARDS */
+.view { display: none; padding: 20px; max-width: 800px; margin: 0 auto; }
+.view.active { display: block; animation: slideUp 0.4s ease-out; }
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-function renderDashboard(){
-    const l=document.getElementById('client-list');
-    const t=trans[currentLang];
-    l.innerHTML=projects.map((p,i)=>{
-        let c = p.status==='new'?"status-new":p.status==='work'?"status-work":"status-done";
-        let stTxt = p.status==='new'?t.stNew : p.status==='work'?t.stWork : t.stDone;
-        let stColorClass = p.status==='new'?"txt-new" : p.status==='work'?"txt-work" : "txt-done";
-        let dateStr = new Date(p.startDate).toLocaleDateString(currentLang==='ro'?'ro-RO':'de-DE');
-        return `
-        <div class="card client-card ${c}" onclick="openModal(${i})">
-            <div class="card-details">
-                <div class="status-text-row"><span class="${stColorClass}">${stTxt}</span></div>
-                <h4>${p.name}</h4>
-                <p><i class="fas fa-map-marker-alt"></i> ${p.address}</p>
-                <div class="card-date"><i class="far fa-calendar-alt"></i> ${dateStr}</div>
-            </div>
-            <div class="card-actions-container">
-                <button class="btn-delete" onclick="window.deleteProject(${i}, event)"><i class="fas fa-trash"></i></button>
-                ${p.status !== 'done' ? 
-                    `<button class="btn-finish" onclick="window.toggleStatus(${i}, event)"><i class="fas fa-check"></i></button>` : 
-                    `<button class="btn-undo" onclick="window.toggleStatus(${i}, event)"><i class="fas fa-undo"></i></button>`
-                }
-            </div>
-        </div>`;
-    }).join('');
-}
+.section-header { text-align: center; margin-bottom: 20px; }
+.section-header h3 { margin: 10px 0; color: var(--dark); border-bottom: 3px solid var(--primary); display: inline-block; padding-bottom: 5px; }
+.cards-grid { display: flex; flex-direction: column; gap: 20px; width: 100%; }
 
-function cleanText(str) { if(!str) return ""; return str.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }
-window.showView = (id) => { document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); document.getElementById('view-'+id).classList.add('active'); document.getElementById('fab-add').style.display=id==='dashboard'?'flex':'none'; };
-window.openSettingsModal = () => document.getElementById('modal-settings').classList.remove('hidden');
-window.closeSettingsModal = () => document.getElementById('modal-settings').classList.add('hidden');
-window.closeModal = () => document.getElementById('modal-details').classList.add('hidden');
-window.openLightbox = (src) => { document.getElementById('lightbox-img').src = src; document.getElementById('lightbox-view').classList.remove('hidden'); };
-window.closeLightbox = () => document.getElementById('lightbox-view').classList.add('hidden');
+.card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 20px; }
+.client-card { border-left: 6px solid #ccc; position: relative; padding: 25px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; width: 100%; box-sizing: border-box; text-align: left; }
+.client-card:active { transform: scale(0.98); }
+.client-card.status-new { border-left-color: var(--status-new); } .client-card.status-work { border-left-color: var(--status-work); } .client-card.status-done { border-left-color: var(--status-done); opacity: 0.8; background: #f9f9f9; }
 
-window.toggleStatus = async (i,e) => { e.stopPropagation(); const p=projects[i]; const r=doc(db,"projects",p.id); const s=p.status==='done'?'new':'done'; const ed=s==='done'?new Date().toISOString().split('T')[0]:null; await updateDoc(r,{status:s,endDate:ed}); };
-window.deleteProject = async (index, event) => { event.stopPropagation(); const confirmMsg = currentLang === 'ro' ? "Sigur ștergi acest proiect?" : "Projekt wirklich löschen?"; if(confirm(confirmMsg)) { const p = projects[index]; try { await deleteDoc(doc(db, "projects", p.id)); } catch (e) { alert("Eroare: " + e.message); } } };
+.card-details { flex-grow: 1; padding-right: 15px; }
+.status-text-row { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 0.5px; }
+.txt-new { color: var(--status-new); } .txt-work { color: var(--status-work); } .txt-done { color: var(--status-done); }
+.card-details h4 { margin: 0 0 5px 0; font-size: 1.25rem; color: var(--dark); } 
+.card-details p { margin: 0; font-size: 1rem; color: #666; display: flex; align-items: center; gap: 5px; }
+.card-date { font-size: 0.85rem; color: #999; margin-top: 8px; display: flex; align-items: center; gap: 6px; }
 
-document.getElementById('project-form').addEventListener('submit',async e=>{ 
-    e.preventDefault(); 
-    await addDoc(collection(db,"projects"), { 
-        name:document.getElementById('in-name').value, address:document.getElementById('in-address').value, startDate:document.getElementById('in-start-date').value, endDate:null, status:'new', 
-        dims:{ l:parseFloat(document.getElementById('in-length').value)||0, w:parseFloat(document.getElementById('in-width').value)||0, s:parseFloat(document.getElementById('in-slope').value)||0, area:parseFloat(document.getElementById('in-area').value)||0, perim:parseFloat(document.getElementById('in-perim').value)||0, access:document.getElementById('in-access').value, digging:document.getElementById('in-digging').value }, 
-        materials:[...tempMaterialList], photos:[...tempPhotosBase64], notes:document.getElementById('in-notes').value 
-    }); 
-    e.target.reset(); tempMaterialList=[]; document.getElementById('mat-list').innerHTML=""; window.showView('dashboard'); 
-});
+.card-actions-container { display: flex; flex-direction: column; gap: 8px; align-items: center; }
+.btn-finish, .btn-undo, .btn-delete { background: transparent; padding: 0; width: 45px; height: 45px; border-radius: 15px; cursor: pointer; font-size: 1.2rem; z-index: 10; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.btn-finish { border: 2px solid var(--status-done); color: var(--status-done); } .btn-finish:hover { background: var(--status-done); color: white; }
+.btn-undo { border: 2px solid #7f8c8d; color: #7f8c8d; }
+.btn-delete { border: 2px solid var(--danger); color: var(--danger); } .btn-delete:hover { background: var(--danger); color: white; }
 
-document.getElementById('in-photos').addEventListener('change',e=>{const g=document.getElementById('photo-previews');g.innerHTML="";tempPhotosBase64=[];Array.from(e.target.files).forEach(f=>{const r=new FileReader();r.onload=ev=>{tempPhotosBase64.push(ev.target.result);g.innerHTML+=`<img src="${ev.target.result}">`;};r.readAsDataURL(f);});});
+.form-nav { display: flex; align-items: center; justify-content: center; margin-bottom: 25px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+.btn-back { background: transparent; border: none; font-size: 1.1rem; color: var(--primary); font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 10px; position: absolute; left: 20px; }
+#form-title { margin: 0 auto; font-size: 1.5rem; color: var(--dark); padding-right: 40px; }
+.card h3 { margin: 0 0 20px 0; color: var(--primary); font-size: 1.1rem; display: flex; gap: 10px; align-items: center; text-transform: uppercase; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; }
+.card-header-row { display: flex; justify-content: space-between; align-items: center; } .card-header-row h3 { border: none; padding: 0; margin: 0; }
+.settings-icon-btn { border: none; background: none; font-size: 1.2rem; color: #999; cursor: pointer; }
 
-window.openModal = (index) => {
-    currentProjectIndex = index;
-    const p = projects[index];
-    const t = trans[currentLang];
-    const body = document.getElementById('modal-body');
-    const matHTML = p.materials?.map(m => `<li><span>${m.name}</span> <b>${m.qty} ${m.unit}</b></li>`).join('') || '';
-    const photoHTML = `<div class="modal-photos-grid">${p.photos?.map(s => `<img src="${s}" onclick="openLightbox('${s}')">`).join('') || ''}</div>`;
-    const encodedAddr = encodeURIComponent(p.address);
-    const mapsLink = `https://www.google.com/maps/dir/?api=1&destination=${encodedAddr}`;
-    const wazeLink = `https://waze.com/ul?q=${encodedAddr}&navigate=yes`;
-    let endDateHTML = '';
-    if (p.status === 'done') endDateHTML = `<div class="detail-row"><div class="detail-label">${t.pEnd}</div><input type="date" id="edit-end-date" class="modal-input" value="${p.endDate || ''}"></div>`;
-    const genOpts = (opts, sel) => opts.map(o => `<option value="${o}" ${o===sel?'selected':''}>${o}</option>`).join('');
+.input-label { display: block; margin-top: 15px; font-weight: bold; color: var(--dark); font-size: 0.95rem; margin-bottom: 5px; }
+input, select, textarea { width: 100%; padding: 15px; margin: 5px 0 15px 0; border: 2px solid #eee; border-radius: 12px; font-size: 1rem; box-sizing: border-box; outline: none; background: #fff; text-align: left; }
+input:focus, select:focus, textarea:focus { border-color: var(--primary); }
 
-    body.innerHTML = `
-        <div class="detail-row"><div class="detail-label">${t.mdStatus}</div><select id="edit-status" class="modal-input" onchange="toggleEndDateField(this)"><option value="new" ${p.status==='new'?'selected':''}>${t.stNew}</option><option value="work" ${p.status==='work'?'selected':''}>${t.stWork}</option><option value="done" ${p.status==='done'?'selected':''}>${t.stDone}</option></select></div>
-        <div class="detail-row"><div class="detail-label">${t.pName}</div><input type="text" id="edit-name" class="modal-input" value="${p.name}"></div>
-        <div class="detail-row"><div class="detail-label">${t.pAddr}</div><input type="text" id="edit-address" class="modal-input" value="${p.address}">
-        <div class="nav-buttons-container"><a href="${mapsLink}" target="_blank" class="btn-nav btn-maps">Maps</a><a href="${wazeLink}" target="_blank" class="btn-nav btn-waze">Waze</a></div></div>
-        <div class="detail-row"><div class="detail-label">${t.pDate}</div><input type="date" id="edit-date" class="modal-input" value="${p.startDate}"></div>
-        <div id="end-date-container">${endDateHTML}</div>
-        <div class="detail-row grid-3"><div><span>${t.l}</span><input id="edit-l" class="modal-input" value="${p.dims.l}"></div><div><span>${t.w}</span><input id="edit-w" class="modal-input" value="${p.dims.w}"></div><div><span>${t.s}</span><input id="edit-s" class="modal-input" value="${p.dims.s}"></div></div>
-        <div class="detail-row grid-2"><div><span>${t.lblArea}</span><input id="edit-area" class="modal-input" value="${p.dims.area||0}"></div><div><span>${t.lblPerim}</span><input id="edit-perim" class="modal-input" value="${p.dims.perim||0}"></div></div>
-        <div class="detail-row grid-2"><div><span>${t.lblAccess}</span><select id="edit-access" class="modal-input">${genOpts(t.accessOpts, p.dims.access)}</select></div><div><span>${t.lblDigging}</span><select id="edit-digging" class="modal-input">${genOpts(t.diggingOpts, p.dims.digging)}</select></div></div>
-        <div class="detail-row"><div class="detail-label">${t.mdNotes}</div><textarea id="edit-notes" class="modal-textarea">${p.notes||''}</textarea></div>
-        <ul class="modal-mat-list">${matHTML}</ul>
-        ${photoHTML}
-    `;
-    document.getElementById('modal-details').classList.remove('hidden');
-};
+.input-with-btn { display: flex; align-items: center; gap: 10px; margin: 8px 0 15px 0; }
+.input-with-btn input { margin: 0; flex-grow: 1; }
+.btn-gps { background: var(--secondary); color: white; border: none; width: 50px; height: 50px; border-radius: 12px; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+.btn-gps:active { transform: scale(0.95); }
 
-window.toggleEndDateField = (e) => { const c=document.getElementById('end-date-container'); if(e.value==='done'){ const d=new Date().toISOString().split('T')[0]; c.innerHTML=`<div class="detail-row"><div class="detail-label">${trans[currentLang].pEnd}</div><input type="date" id="edit-end-date" class="modal-input" value="${d}"></div>`;} else c.innerHTML=''; };
-window.saveEditedProject = async () => { if (currentProjectIndex === null) return; const p = projects[currentProjectIndex]; const docRef = doc(db, "projects", p.id); const data = { status: document.getElementById('edit-status').value, name: document.getElementById('edit-name').value, address: document.getElementById('edit-address').value, startDate: document.getElementById('edit-date').value, dims: { l: parseFloat(document.getElementById('edit-l').value)||0, w: parseFloat(document.getElementById('edit-w').value)||0, s: parseFloat(document.getElementById('edit-s').value)||0, area: parseFloat(document.getElementById('edit-area').value)||0, perim: parseFloat(document.getElementById('edit-perim').value)||0, access: document.getElementById('edit-access').value, digging: document.getElementById('edit-digging').value }, notes: document.getElementById('edit-notes').value }; const ed = document.getElementById('edit-end-date'); if (ed) data.endDate = ed.value; else if (data.status !== 'done') data.endDate = null; await updateDoc(docRef, data); document.getElementById('modal-details').classList.add('hidden'); };
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+.mt-15 { margin-top: 15px; }
+.micro-label { font-size: 0.75rem; color: #7f8c8d; font-weight: 700; margin-left: 5px; display: block; margin-bottom: 3px; }
+.area-badge { background: #e8f5e9; padding: 15px; border-radius: 12px; text-align: center; color: #2e7d32; font-weight: bold; margin-top: 15px; border: 1px solid #c8e6c9; font-size: 1.1rem; }
 
-window.generatePDFForCurrent = () => { if (currentProjectIndex === null) return; const p = projects[currentProjectIndex]; const { jsPDF } = window.jspdf; const doc = new jsPDF(); const pageWidth = doc.internal.pageSize.getWidth(); const pageHeight = doc.internal.pageSize.getHeight(); doc.setFillColor(252, 252, 252); doc.rect(0, 0, pageWidth, 45, "F"); const logoImg = document.getElementById('pdf-logo-source'); if(logoImg && logoImg.src) { try { doc.addImage(logoImg, 'PNG', 15, 5, 70, 0); } catch(e){} } doc.setTextColor(0, 80, 60); doc.setFontSize(16); doc.setFont("helvetica", "bold"); doc.text("FISA PROIECT / PROJEKTBLATT", pageWidth - 15, 30, {align:"right"}); doc.setFontSize(10); doc.setTextColor(150); doc.setFont("helvetica", "normal"); doc.text("CLIENT & LOCATIE", 20, 60); doc.setFontSize(14); doc.setTextColor(0); doc.text(cleanText(p.name), 20, 68); doc.setFontSize(12); doc.text(doc.splitTextToSize(cleanText(p.address), 100), 20, 75); doc.setFontSize(10); doc.setTextColor(150); doc.text("INFO PROIECT", 130, 60); doc.setFontSize(12); doc.setTextColor(0); doc.text(`Start: ${p.startDate}`, 130, 68); if(p.endDate) doc.text(`Final: ${p.endDate}`, 130, 75); else doc.text(`Status: ${cleanText(trans[currentLang].stWork)}`, 130, 75); doc.setDrawColor(220); doc.line(20, 90, 190, 90); doc.setFontSize(14); doc.setTextColor(0, 150, 136); doc.text("DETALII TEREN", 20, 105); doc.setFontSize(12); doc.setTextColor(0); doc.text(`Dim: ${p.dims.l}m x ${p.dims.w}m (${p.dims.s}%)`, 20, 115); const areaVal = p.dims.area ? p.dims.area : (p.dims.l * p.dims.w).toFixed(2); doc.text(`SUPRAFATA: ${areaVal} mp`, 20, 122); doc.text(`PERIMETRU: ${p.dims.perim || 0} ml`, 100, 122); doc.setFontSize(10); doc.setTextColor(150); doc.text("LOGISTICA", 20, 135); doc.setFontSize(11); doc.setTextColor(0); doc.text(`Acces: ${cleanText(p.dims.access || '-')}`, 20, 142); doc.text(`Sapatura: ${cleanText(p.dims.digging || '-')}`, 100, 142); let y = 155; if(p.notes){ doc.setFontSize(14); doc.setTextColor(0, 150, 136); doc.text("NOTE", 20, y); y+=8; doc.setFontSize(11); doc.setTextColor(50); const splitNotes = doc.splitTextToSize(cleanText(p.notes), 170); doc.text(splitNotes, 20, y); y += splitNotes.length * 7 + 10; } doc.setFontSize(14); doc.setTextColor(0, 150, 136); doc.text("MATERIALE", 20, y); doc.setDrawColor(220); doc.line(20, y+3, 190, y+3); y+=15; doc.setFontSize(10); doc.setTextColor(150); doc.text("DENUMIRE", 20, y); doc.text("CANTITATE", 150, y); y+=10; doc.setFontSize(12); doc.setTextColor(0); if(p.materials) p.materials.forEach(m => { doc.text(cleanText(m.name), 20, y); doc.text(`${m.qty} ${cleanText(m.unit)}`, 150, y); y+=10; }); const dGen = new Date().toLocaleString(); doc.setDrawColor(200); doc.line(20, pageHeight - 15, pageWidth-20, pageHeight - 15); doc.setFontSize(9); doc.setTextColor(150); doc.text(`Generat: ${dGen}`, 20, pageHeight - 8); doc.text("Victor Tigoianu App", pageWidth - 20, pageHeight - 8, {align:"right"}); doc.save(`${cleanText(p.name).replace(/\s+/g,'_')}.pdf`); };
+.material-adder-complex { background: #f9f9f9; padding: 20px; border-radius: 15px; border: 1px solid #eee; }
+.input-row-actions { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: center; }
+.add-btn-icon { background: var(--primary); color: white; border: none; width: 54px; height: 54px; border-radius: 12px; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.styled-list li { background: #fff; margin-top: 10px; padding: 15px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 4px solid var(--secondary); text-align: left; }
+.upload-area { border: 2px dashed #ccc; padding: 40px; text-align: center; border-radius: 15px; color: #888; cursor: pointer; transition: 0.2s; } .upload-area:hover { background: #f9f9f9; border-color: var(--primary); color: var(--primary); }
+.photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; margin-top: 20px; } .photo-grid img { width: 100%; height: 80px; object-fit: cover; border-radius: 10px; }
+
+.fab { position: fixed; bottom: 30px; right: 30px; width: 65px; height: 65px; background: var(--accent); color: white; border: none; border-radius: 50%; box-shadow: 0 10px 20px rgba(255, 95, 109, 0.4); font-size: 1.5rem; z-index: 90; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.save-btn { background: var(--dark); color: white; width: 100%; padding: 18px; border-radius: 15px; font-weight: bold; border: none; margin-bottom: 15px; font-size: 1.1rem; cursor: pointer; }
+
+/* MODALE */
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 1000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+.modal-content { background: white; width: 90%; max-width: 600px; height: 90vh; border-radius: 25px; box-shadow: 0 20px 50px rgba(0,0,0,0.4); text-align: left; display: flex; flex-direction: column; overflow: hidden; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+@keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+.modal-header { display: flex; justify-content: center; align-items: center; border-bottom: 2px solid #f0f0f0; padding: 20px; background: white; flex-shrink: 0; position: relative; }
+.modal-header h2 { margin: 0; font-size: 1.6rem; color: var(--dark); }
+.close-modal-btn { background: #f0f0f0; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 1.5rem; color: #666; cursor: pointer; position: absolute; right: 20px; top: 15px; display: flex; align-items: center; justify-content: center; }
+.modal-body-scrollable { flex-grow: 1; overflow-y: auto; padding: 20px; scrollbar-width: thin; scrollbar-color: #ccc transparent; }
+.modal-footer-actions { display: flex; gap: 10px; padding: 20px; background: white; border-top: 1px solid #f0f0f0; flex-shrink: 0; }
+
+.modal-input { background: #f8f9fa; border: 1px solid #ddd; padding: 10px; font-size: 1rem; color: #333; font-weight: 500; width: 100%; border-radius: 8px; box-sizing: border-box; }
+.modal-textarea { width: 100%; min-height: 80px; resize: vertical; padding: 10px; border-radius: 8px; border: 1px solid #ddd; background: #f8f9fa; font-family: inherit; box-sizing: border-box; }
+.detail-row { margin-bottom: 20px; border-bottom: 1px dashed #eee; padding-bottom: 15px; }
+.detail-label { font-size: 0.8rem; color: var(--primary); font-weight: 800; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px; }
+
+.nav-buttons-container { display: flex; gap: 10px; margin-top: 10px; }
+.btn-nav { flex: 1; padding: 12px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; color: white; text-decoration: none; font-size: 0.9rem; }
+.btn-maps { background: #4285F4; } .btn-waze { background: #33CCFF; }
+
+.btn-pdf-export { background: #e74c3c; color: white; border: none; padding: 15px; border-radius: 12px; font-weight: bold; flex: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.btn-save-changes { background: var(--dark); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: bold; flex: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+
+.modal-photos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
+.modal-photos-grid img { width: 100%; height: 120px; object-fit: cover; border-radius: 10px; border: 1px solid #ddd; cursor: pointer; transition: transform 0.2s; }
+.settings-input-group { display: flex; gap: 10px; margin-bottom: 15px; }
+.btn-add-setting { background: var(--primary); color: white; border: none; width: 45px; border-radius: 10px; cursor: pointer; }
+.divider { border: 0; border-top: 1px dashed #ddd; margin: 20px 0; }
+.settings-list li { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #f0f0f0; }
+
+.lightbox { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 5000; display: flex; justify-content: center; align-items: center; animation: popIn 0.2s; }
+.lightbox img { max-width: 95%; max-height: 95%; border-radius: 5px; box-shadow: 0 0 20px rgba(255,255,255,0.2); }
+.lightbox-close { position: absolute; top: 20px; right: 30px; font-size: 3rem; color: white; cursor: pointer; z-index: 5001; }
