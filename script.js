@@ -14,7 +14,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// CONFIG & TRADUCERI
+// --- CONFIGURARE TRADUCERI ---
 const trans = {
     ro: {
         title: "Victor Tigoianu", active: "Proiecte Active", client: "Date Client",
@@ -32,6 +32,7 @@ const trans = {
         days: ["Duminică", "Luni", "Marți", "Miercuri", "Joi", "Vineri", "Sâmbătă"],
         shortDays: ["Dum", "Lun", "Mar", "Mie", "Joi", "Vin", "Sam"],
         months: ["Ianuarie", "Februarie", "Martie", "Aprilie", "Mai", "Iunie", "Iulie", "August", "Septembrie", "Octombrie", "Noiembrie", "Decembrie"],
+        
         lblArea: "Suprafață (mp)", lblPerim: "Perimetru (ml)",
         lblAccess: "Acces Utilaj", lblDigging: "Tip Săpătură",
         accessOpts: ["Nu (Pietonal)", "Mini-Excavator", "Mare (Camion)"],
@@ -53,6 +54,7 @@ const trans = {
         days: ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"],
         shortDays: ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"],
         months: ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"],
+        
         lblArea: "Fläche (m²)", lblPerim: "Umfang (lm)",
         lblAccess: "Maschinenzugang", lblDigging: "Grabungstyp",
         accessOpts: ["Nein (Fußgänger)", "Minibagger", "Groß (LKW)"],
@@ -76,6 +78,7 @@ const weatherIcons = {
     45: "fa-smog", 48: "fa-smog", 51: "fa-cloud-rain", 61: "fa-cloud-rain", 95: "fa-bolt"
 };
 
+// --- INIT ---
 function loadRealtimeData() {
     const q = query(collection(db, "projects"), orderBy("startDate", "desc"));
     onSnapshot(q, (snapshot) => {
@@ -90,11 +93,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-lang-ro').classList.add('active-lang');
     updateDateTime(); setInterval(updateDateTime, 1000);
     getRealWeather();
+    
     document.getElementById('in-length').addEventListener('input', updateArea);
     document.getElementById('in-width').addEventListener('input', updateArea);
 });
 
-// === LOGICA COMPRESIE FOTO ===
+// --- COMPRESIE POZE ---
 function compressImage(file, quality = 0.6, maxWidth = 800) {
     return new Promise((resolve) => {
         const reader = new FileReader();
@@ -116,15 +120,34 @@ function compressImage(file, quality = 0.6, maxWidth = 800) {
     });
 }
 
-// === SCHIMBARE LIMBA ===
+// Handler Poze Multiple
+document.getElementById('in-photos').addEventListener('change', async (e) => {
+    const g = document.getElementById('photo-previews');
+    g.innerHTML = "";
+    tempPhotosBase64 = [];
+    const files = Array.from(e.target.files);
+    
+    for (const file of files) {
+        try {
+            const compressedBase64 = await compressImage(file);
+            tempPhotosBase64.push(compressedBase64);
+            g.innerHTML += `<img src="${compressedBase64}">`;
+        } catch (err) {
+            console.error("Eroare compresie:", err);
+        }
+    }
+});
+
+// --- CHANGE LANGUAGE ---
 window.changeLanguage = (l) => {
+    // 1. Vizual Butoane
     document.getElementById('btn-lang-ro').classList.remove('active-lang');
     document.getElementById('btn-lang-de').classList.remove('active-lang');
     document.getElementById('btn-lang-' + l).classList.add('active-lang');
 
     currentLang = l; const t = trans[l];
     
-    // Traduceri Statice
+    // 2. Texte Generale
     document.getElementById('label-active-projects').innerText = t.active;
     document.getElementById('form-title').innerText = l === 'ro' ? "Șantier Nou" : "Neue Baustelle";
     document.getElementById('label-client-data').innerHTML=`<i class="fas fa-user-circle"></i> ${t.client}`;
@@ -148,6 +171,7 @@ window.changeLanguage = (l) => {
     document.getElementById('btn-save').innerText=t.save;
     document.getElementById('btn-back-text').innerText=t.back;
     
+    // 3. Modale
     document.getElementById('modal-title').innerText=t.mdTitle;
     document.getElementById('settings-title').innerText=t.settingsTitle;
     document.getElementById('lbl-manage-mats').innerText=t.manageMats;
@@ -155,12 +179,13 @@ window.changeLanguage = (l) => {
     document.getElementById('lbl-manage-units').innerText=t.manageUnits;
     document.getElementById('new-unit-input').placeholder=t.phNewUnit;
 
-    // Actualizare Dropdowns
+    // 4. Dropdowns
     const sAccess = document.getElementById('in-access'); sAccess.innerHTML = "";
     t.accessOpts.forEach(o => { sAccess.innerHTML += `<option value="${o}">${o}</option>` });
     const sDig = document.getElementById('in-digging'); sDig.innerHTML = "";
     t.diggingOpts.forEach(o => { sDig.innerHTML += `<option value="${o}">${o}</option>` });
 
+    // 5. Update Liste & Dashboard
     updateDatalist();
     updateUnitSelect();
     renderDashboard();
@@ -192,7 +217,6 @@ function updateUnitSelect() {
     });
 }
 
-// --- FUNCTII GLOBALE ---
 window.addMaterial = () => {
     const n = document.getElementById('in-mat-name').value;
     const q = document.getElementById('in-mat-qty').value;
@@ -239,6 +263,7 @@ function updateArea(){
     if(l>0 && w>0) document.getElementById('in-area').value = (l*w).toFixed(2);
 }
 
+// --- GPS & VREME & ORA ---
 window.getLocationForAddress = () => {
     const field = document.getElementById('in-address');
     if (navigator.geolocation) {
@@ -289,6 +314,7 @@ function updateDateTime(){
     document.getElementById('display-time').innerText=n.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
 }
 
+// --- RENDER DASHBOARD ---
 function renderDashboard(){
     const l=document.getElementById('client-list');
     const t=trans[currentLang];
@@ -316,6 +342,7 @@ function renderDashboard(){
     }).join('');
 }
 
+// --- HELPERS FINALI ---
 function cleanText(str) { if(!str) return ""; return str.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }
 window.showView = (id) => { document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); document.getElementById('view-'+id).classList.add('active'); document.getElementById('fab-add').style.display=id==='dashboard'?'flex':'none'; };
 window.openSettingsModal = () => document.getElementById('modal-settings').classList.remove('hidden');
@@ -327,7 +354,7 @@ window.closeLightbox = () => document.getElementById('lightbox-view').classList.
 window.toggleStatus = async (i,e) => { e.stopPropagation(); const p=projects[i]; const r=doc(db,"projects",p.id); const s=p.status==='done'?'new':'done'; const ed=s==='done'?new Date().toISOString().split('T')[0]:null; await updateDoc(r,{status:s,endDate:ed}); };
 window.deleteProject = async (index, event) => { event.stopPropagation(); const confirmMsg = currentLang === 'ro' ? "Sigur ștergi acest proiect?" : "Projekt wirklich löschen?"; if(confirm(confirmMsg)) { const p = projects[index]; try { await deleteDoc(doc(db, "projects", p.id)); } catch (e) { alert("Eroare: " + e.message); } } };
 
-// SAVE FORM - ACUM SUPORTA POZE DE PE MOBIL
+// SAVE FORM
 document.getElementById('project-form').addEventListener('submit',async e=>{ 
     e.preventDefault(); 
     try {
@@ -345,18 +372,6 @@ document.getElementById('project-form').addEventListener('submit',async e=>{
     } catch (err) {
         alert("Eroare la salvare! Posibil pozele sunt prea mari. Incearca mai putine.");
         console.error(err);
-    }
-});
-
-document.getElementById('in-photos').addEventListener('change',async e=>{
-    const g=document.getElementById('photo-previews'); g.innerHTML=""; tempPhotosBase64=[];
-    const files = Array.from(e.target.files);
-    for (const file of files) {
-        try {
-            const compressedBase64 = await compressImage(file);
-            tempPhotosBase64.push(compressedBase64);
-            g.innerHTML += `<img src="${compressedBase64}">`;
-        } catch (err) { console.error("Err compresie:", err); }
     }
 });
 
