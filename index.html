@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Victor Tigoianu Management</title>
+    
+    <link rel="icon" type="image/png" href="icon.png">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <img id="pdf-logo-source" src="logo.png" style="display:none;" alt="logo source">
+
+    <div id="app-container">
+        
+        <header class="app-header">
+            <div class="header-top">
+                <div class="brand">
+                    <img src="logo.png" alt="Logo" class="header-logo-img">
+                </div>
+                <div class="header-actions">
+                    <div class="lang-selector">
+                        <button id="btn-lang-ro" onclick="changeLanguage('ro')">RO</button>
+                        <button id="btn-lang-de" onclick="changeLanguage('de')">DE</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="dashboard-widget">
+                <div class="date-time-container">
+                    <h2 id="display-date">--</h2>
+                    <p id="display-time">00:00</p>
+                </div>
+                
+                <div class="weather-container">
+                    <div class="weather-current">
+                        <i id="weather-icon-main" class="fas fa-sun"></i>
+                        <div class="weather-text">
+                            <span id="display-temp">--°C</span>
+                            <small id="display-weather-desc">...</small>
+                        </div>
+                    </div>
+                    <div id="forecast-list" class="forecast-mini"></div>
+                </div>
+            </div>
+        </header>
+
+        <main id="main-content">
+            <div id="view-dashboard" class="view active">
+                <div class="section-header">
+                    <h3 id="label-active-projects">Proiecte Active</h3>
+                </div>
+                <div id="client-list" class="cards-grid"></div>
+            </div>
+
+            <div id="view-form" class="view">
+                <div class="form-nav">
+                    <button type="button" class="btn-back" onclick="showView('dashboard')">
+                        <i class="fas fa-arrow-left"></i> <span id="btn-back-text">Înapoi</span>
+                    </button>
+                    <h2 id="form-title">Șantier Nou</h2>
+                </div>
+
+                <form id="project-form">
+                    <div class="card">
+                        <h3 id="label-client-data"><i class="fas fa-user-circle"></i> Client</h3>
+                        <input type="text" id="in-name" required placeholder="Nume Client">
+                        <div class="input-with-btn">
+                            <input type="text" id="in-address" required placeholder="Adresă" style="margin:0">
+                            <button type="button" class="btn-gps" onclick="getLocationForAddress()">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </button>
+                        </div>
+                        <label class="input-label" id="label-start-date">Data Începerii:</label>
+                        <input type="date" id="in-start-date" required>
+                    </div>
+
+                    <div class="card">
+                        <h3 id="label-specs"><i class="fas fa-drafting-compass"></i> Detalii Teren</h3>
+                        <div class="grid-3">
+                            <input type="number" id="in-length" step="0.1" placeholder="L (m)">
+                            <input type="number" id="in-width" step="0.1" placeholder="l (m)">
+                            <input type="number" id="in-slope" step="1" placeholder="Pantă %">
+                        </div>
+                        
+                        <div class="grid-2 mt-15">
+                            <div class="input-wrapper">
+                                <label class="micro-label" id="lbl-area">Suprafață (mp)</label>
+                                <input type="number" id="in-area" step="0.1" placeholder="0">
+                            </div>
+                            <div class="input-wrapper">
+                                <label class="micro-label" id="lbl-perim">Perimetru (ml)</label>
+                                <input type="number" id="in-perim" step="0.1" placeholder="0">
+                            </div>
+                        </div>
+
+                        <div class="grid-2 mt-15">
+                            <div class="input-wrapper">
+                                <label class="micro-label" id="lbl-access">Acces Utilaje</label>
+                                <select id="in-access"></select>
+                            </div>
+                            <div class="input-wrapper">
+                                <label class="micro-label" id="lbl-digging">Tip Săpătură</label>
+                                <select id="in-digging"></select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header-row">
+                            <h3 id="label-materials"><i class="fas fa-boxes"></i> Materiale</h3>
+                            <button type="button" class="settings-icon-btn" onclick="openSettingsModal()">
+                                <i class="fas fa-cog"></i>
+                            </button>
+                        </div>
+                        <div class="material-adder-complex">
+                            <div class="input-full">
+                                <input list="dl-materials" id="in-mat-name" autocomplete="off" placeholder="Caută material...">
+                                <datalist id="dl-materials"></datalist>
+                            </div>
+                            <div class="input-row-actions">
+                                <input type="number" id="in-mat-qty" class="qty-input" placeholder="Cant.">
+                                <select id="in-mat-unit" class="unit-select"></select>
+                                <button type="button" class="add-btn-icon" onclick="addMaterial()">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <ul id="mat-list" class="styled-list"></ul>
+                    </div>
+
+                    <div class="card">
+                        <h3 id="label-photos"><i class="fas fa-images"></i> Foto</h3>
+                        <div class="upload-area" onclick="document.getElementById('in-photos').click()">
+                            <i class="fas fa-camera"></i>
+                            <p id="label-upload-hint">Atinge pentru poze</p>
+                        </div>
+                        <input type="file" id="in-photos" accept="image/*" multiple capture="environment" hidden>
+                        <div id="photo-previews" class="photo-grid"></div>
+                    </div>
+
+                    <div class="card">
+                        <h3 id="label-notes"><i class="fas fa-sticky-note"></i> Note</h3>
+                        <textarea id="in-notes" rows="3" class="modal-textarea" placeholder="..."></textarea>
+                    </div>
+
+                    <div class="form-footer">
+                        <button type="submit" class="save-btn" id="btn-save">SALVEAZĂ</button>
+                    </div>
+                </form>
+            </div>
+        </main>
+
+        <button class="fab" id="fab-add" onclick="showView('form')">
+            <i class="fas fa-plus"></i>
+        </button>
+
+        <div id="modal-details" class="modal-overlay hidden">
+            <div class="modal-content modal-large">
+                <div class="modal-header">
+                    <h2 id="modal-title">Detalii Proiect</h2>
+                    <button class="close-modal-btn" onclick="closeModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div id="modal-body" class="modal-body-scrollable"></div>
+                <div class="modal-footer-actions">
+                    <button class="btn-pdf-export" onclick="generatePDFForCurrent()">
+                        <i class="fas fa-file-pdf"></i> PDF
+                    </button>
+                    <button class="btn-save-changes" onclick="saveEditedProject()">
+                        <i class="fas fa-save"></i> Salvează
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="modal-settings" class="modal-overlay hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="settings-title">Liste</h2>
+                    <button class="close-modal-btn" onclick="closeSettingsModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body-scrollable">
+                    <h4 id="lbl-manage-mats">Materiale</h4>
+                    <div class="settings-input-group">
+                        <input type="text" id="new-mat-input" placeholder="...">
+                        <button class="btn-add-setting" onclick="addCustomItem('material')"><i class="fas fa-plus"></i></button>
+                    </div>
+                    <ul id="settings-mat-list" class="settings-list"></ul>
+                    <hr class="divider">
+                    <h4 id="lbl-manage-units">Unități</h4>
+                    <div class="settings-input-group">
+                        <input type="text" id="new-unit-input" placeholder="...">
+                        <button class="btn-add-setting" onclick="addCustomItem('unit')"><i class="fas fa-plus"></i></button>
+                    </div>
+                    <ul id="settings-unit-list" class="settings-list"></ul>
+                </div>
+            </div>
+        </div>
+
+        <div id="lightbox-view" class="lightbox hidden" onclick="closeLightbox()">
+            <span class="lightbox-close">×</span>
+            <img id="lightbox-img" src="">
+        </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>
