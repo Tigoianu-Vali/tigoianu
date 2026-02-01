@@ -35,6 +35,7 @@ const trans = {
         phMatName: "Caută sau scrie material...", phMatQty: "Cant.",
         settingsTitle: "Liste", manageMats: "Materiale", manageUnits: "Unități",
         phNewMat: "Material nou...", phNewUnit: "Unitate nouă...",
+        weather: "Cer Senin", loadingWeather: "Se localizează...",
         days: ["Duminică", "Luni", "Marți", "Miercuri", "Joi", "Vineri", "Sâmbătă"],
         shortDays: ["Dum", "Lun", "Mar", "Mie", "Joi", "Vin", "Sam"],
         months: ["Ianuarie", "Februarie", "Martie", "Aprilie", "Mai", "Iunie", "Iulie", "August", "Septembrie", "Octombrie", "Noiembrie", "Decembrie"],
@@ -44,7 +45,7 @@ const trans = {
         diggingOpts: ["Ușoară/Normală", "Grea (Pietriș)", "Moloz/Beton"],
         filterAll: "Toate", filterNew: "Noi", filterWork: "În Lucru", filterDone: "Finalizate", searchPh: "Caută client...",
         lblTotal: "Total Ofertat", lblAdvance: "Avans Primit", lblBalance: "Rest de Plată", lblPaid: "ACHITAT INTEGRAL", lblFinance: "Financiar", markPaid: "Marchează Achitat",
-        addPhotosBtn: "Adaugă Poze"
+        addPhotosBtn: "Adaugă Poze", addMatBtn: "Adaugă Material" 
     },
     de: {
         title: "Victor Tigoianu", active: "Aktive Projekte", client: "Kundendaten",
@@ -58,6 +59,7 @@ const trans = {
         phMatName: "Suchen oder eingeben...", phMatQty: "Menge",
         settingsTitle: "Listen verwalten", manageMats: "Materialien", manageUnits: "Einheiten",
         phNewMat: "Neues Material...", phNewUnit: "Neue Einheit...",
+        weather: "Heiter", loadingWeather: "Standort wird gesucht...",
         days: ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"],
         shortDays: ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"],
         months: ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"],
@@ -67,7 +69,7 @@ const trans = {
         diggingOpts: ["Leicht/Normal", "Schwer (Stein)", "Bauschutt/Beton"],
         filterAll: "Alle", filterNew: "Neu", filterWork: "In Arbeit", filterDone: "Fertig", searchPh: "Kunde suchen...",
         lblTotal: "Gesamtangebot", lblAdvance: "Anzahlung", lblBalance: "Restbetrag", lblPaid: "VOLLSTÄNDIG BEZAHLT", lblFinance: "Finanzen", markPaid: "Als bezahlt markieren",
-        addPhotosBtn: "Fotos hinzufügen"
+        addPhotosBtn: "Fotos hinzufügen", addMatBtn: "Material hinzufügen"
     }
 };
 
@@ -100,11 +102,8 @@ document.addEventListener('DOMContentLoaded', () => {
     loadRealtimeData();
     changeLanguage('ro');
     document.getElementById('btn-lang-ro').classList.add('active-lang');
-    
-    // CEAS REPARAT (PORNIT EXPLICIT)
     updateDateTime(); 
     setInterval(updateDateTime, 1000);
-    
     getRealWeather();
     document.getElementById('in-length').addEventListener('input', updateArea);
     document.getElementById('in-width').addEventListener('input', updateArea);
@@ -179,7 +178,6 @@ window.changeLanguage = (l) => {
     document.getElementById('lbl-manage-units').innerText=t.manageUnits;
     document.getElementById('new-unit-input').placeholder=t.phNewUnit;
     
-    // Traducere titluri carduri financiare (in Formular)
     document.getElementById('label-finance').innerHTML=`<i class="fas fa-coins"></i> ${t.lblFinance} (€)`;
     document.getElementById('lbl-total').innerText = t.lblTotal;
     document.getElementById('lbl-advance').innerText = t.lblAdvance;
@@ -268,6 +266,7 @@ window.renderDashboard = () => {
         let badgeColorClass = p.status==='new'?"badge-new" : p.status==='work'?"badge-work" : "badge-done";
         let dateStr = new Date(p.startDate).toLocaleDateString(currentLang==='ro'?'ro-RO':'de-DE');
         
+        // FINANCIAL BADGE
         let finBadge = "";
         let total = p.financial ? p.financial.total : 0;
         let advance = p.financial ? p.financial.advance : 0;
@@ -349,6 +348,22 @@ window.updateBalanceUI = () => {
     else { card.className = 'balance-card bad'; title.innerText = t.lblBalance; amount.innerHTML = `${rest} <small>€</small>`; }
 };
 
+// ADD MATERIAL TO MODAL (NEW FUNCTION)
+window.addMaterialToModal = () => {
+    const list = document.getElementById('edit-mat-list');
+    const li = document.createElement('li');
+    li.className = "editable-material-row";
+    li.innerHTML = `
+        <input type="text" class="mat-name-edit" placeholder="..." value="">
+        <div class="mat-qty-group">
+            <input type="number" class="mat-qty-edit" placeholder="0" value="">
+            <input type="text" class="mat-unit-edit" placeholder="um" value="">
+        </div>
+        <button class="btn-del-mat" onclick="this.parentElement.remove()">×</button>
+    `;
+    list.appendChild(li);
+};
+
 // FOTO IN MODAL
 function renderModalPhotoGrid() {
     const grid = document.getElementById('modal-photo-grid');
@@ -390,6 +405,7 @@ window.openModal = (index) => {
     let endDateHTML = ''; if (p.status === 'done') endDateHTML = `<div class="detail-row"><div class="detail-label">${t.pEnd}</div><input type="date" id="edit-end-date" class="modal-input" value="${p.endDate || ''}"></div>`;
     const genOpts = (opts, sel) => opts.map(o => `<option value="${o}" ${o===sel?'selected':''}>${o}</option>`).join('');
     
+    // Calc financial
     const total = p.financial ? p.financial.total : 0;
     const advance = p.financial ? p.financial.advance : 0;
     const rest = total - advance;
@@ -431,10 +447,15 @@ window.openModal = (index) => {
             <div class="modal-section-header"><i class="fas fa-sticky-note"></i> ${t.mdNotes}</div>
             <textarea id="edit-notes" class="modal-textarea">${p.notes||''}</textarea>
         </div>
+        
         <div class="modal-section sec-mat">
             <div class="modal-section-header"><i class="fas fa-boxes"></i> ${t.mdMat}</div>
             <ul id="edit-mat-list" class="styled-list" style="padding:0">${matHTML}</ul>
+            <button class="btn-add-photo-modal" onclick="window.addMaterialToModal()" style="margin-top:10px;">
+                <i class="fas fa-plus"></i> ${t.addMatBtn}
+            </button>
         </div>
+
         <div class="modal-section sec-photo">
             <div class="modal-section-header"><i class="fas fa-images"></i> ${t.photos}</div>
             <button class="btn-add-photo-modal" onclick="document.getElementById('edit-add-photo').click()"><i class="fas fa-plus"></i> ${t.addPhotosBtn}</button>
