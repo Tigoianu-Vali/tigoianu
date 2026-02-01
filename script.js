@@ -254,7 +254,45 @@ window.toggleEndDateField = (e) => { const c=document.getElementById('end-date-c
 // SAVE FORM
 document.getElementById('project-form').addEventListener('submit',async e=>{ e.preventDefault(); try { await addDoc(collection(db,"projects"), { name:document.getElementById('in-name').value, address:document.getElementById('in-address').value, startDate:document.getElementById('in-start-date').value, endDate:null, status:'new', dims:{ l:parseFloat(document.getElementById('in-length').value)||0, w:parseFloat(document.getElementById('in-width').value)||0, s:parseFloat(document.getElementById('in-slope').value)||0, area:parseFloat(document.getElementById('in-area').value)||0, perim:parseFloat(document.getElementById('in-perim').value)||0, access:document.getElementById('in-access').value, digging:document.getElementById('in-digging').value }, materials:[...tempMaterialList], photos:[...tempPhotosBase64], notes:document.getElementById('in-notes').value }); e.target.reset(); tempMaterialList=[]; document.getElementById('mat-list').innerHTML=""; document.getElementById('photo-previews').innerHTML=""; tempPhotosBase64=[]; window.showView('dashboard'); } catch (err) { alert("Eroare la salvare!"); console.error(err); } });
 
-// MODAL RENDER CU INPUT-URI PENTRU MATERIALE
+window.saveEditedProject = async () => {
+    if (currentProjectIndex === null) return;
+    const p = projects[currentProjectIndex];
+    const docRef = doc(db, "projects", p.id);
+    
+    // Colectam noile materiale din input-uri
+    const newMats = [];
+    document.querySelectorAll('.editable-material-row').forEach(row => {
+        newMats.push({
+            name: row.querySelector('.mat-name-edit').value,
+            qty: row.querySelector('.mat-qty-edit').value,
+            unit: row.querySelector('.mat-unit-edit').value
+        });
+    });
+
+    const data = { 
+        status: document.getElementById('edit-status').value, 
+        name: document.getElementById('edit-name').value, 
+        address: document.getElementById('edit-address').value, 
+        startDate: document.getElementById('edit-date').value, 
+        dims: { 
+            l: parseFloat(document.getElementById('edit-l').value)||0, 
+            w: parseFloat(document.getElementById('edit-w').value)||0, 
+            s: parseFloat(document.getElementById('edit-s').value)||0, 
+            area: parseFloat(document.getElementById('edit-area').value)||0, 
+            perim: parseFloat(document.getElementById('edit-perim').value)||0, 
+            access: document.getElementById('edit-access').value, 
+            digging: document.getElementById('edit-digging').value 
+        }, 
+        materials: newMats, // Salvam lista actualizata
+        notes: document.getElementById('edit-notes').value 
+    }; 
+    const ed = document.getElementById('edit-end-date'); 
+    if (ed) data.endDate = ed.value; else if (data.status !== 'done') data.endDate = null; 
+    
+    await updateDoc(docRef, data); 
+    document.getElementById('modal-details').classList.add('hidden');
+};
+
 window.openModal = (index) => {
     currentProjectIndex = index; const p = projects[index]; const t = trans[currentLang];
     const encodedAddr = encodeURIComponent(p.address); const mapsLink = `https://www.google.com/maps/dir/?api=1&destination=${encodedAddr}`; const wazeLink = `https://waze.com/ul?q=${encodedAddr}&navigate=yes`;
@@ -297,46 +335,6 @@ window.openModal = (index) => {
         
         ${photoHTML}`;
     document.getElementById('modal-details').classList.remove('hidden');
-};
-
-// SALVARE PROIECT EDITAT (INCLUSIV MATERIALE MODIFICATE)
-window.saveEditedProject = async () => {
-    if (currentProjectIndex === null) return;
-    const p = projects[currentProjectIndex];
-    const docRef = doc(db, "projects", p.id);
-    
-    // Colectam noile materiale din input-uri
-    const newMats = [];
-    document.querySelectorAll('.editable-material-row').forEach(row => {
-        newMats.push({
-            name: row.querySelector('.mat-name-edit').value,
-            qty: row.querySelector('.mat-qty-edit').value,
-            unit: row.querySelector('.mat-unit-edit').value
-        });
-    });
-
-    const data = { 
-        status: document.getElementById('edit-status').value, 
-        name: document.getElementById('edit-name').value, 
-        address: document.getElementById('edit-address').value, 
-        startDate: document.getElementById('edit-date').value, 
-        dims: { 
-            l: parseFloat(document.getElementById('edit-l').value)||0, 
-            w: parseFloat(document.getElementById('edit-w').value)||0, 
-            s: parseFloat(document.getElementById('edit-s').value)||0, 
-            area: parseFloat(document.getElementById('edit-area').value)||0, 
-            perim: parseFloat(document.getElementById('edit-perim').value)||0, 
-            access: document.getElementById('edit-access').value, 
-            digging: document.getElementById('edit-digging').value 
-        }, 
-        materials: newMats, // Salvam lista actualizata
-        notes: document.getElementById('edit-notes').value 
-    }; 
-    const ed = document.getElementById('edit-end-date'); 
-    if (ed) data.endDate = ed.value; else if (data.status !== 'done') data.endDate = null; 
-    
-    await updateDoc(docRef, data); 
-    document.getElementById('modal-details').classList.add('hidden');
 };
 
 window.generatePDFForCurrent = () => { if (currentProjectIndex === null) return; const p = projects[currentProjectIndex]; const { jsPDF } = window.jspdf; const doc = new jsPDF(); const pageWidth = doc.internal.pageSize.getWidth(); const pageHeight = doc.internal.pageSize.getHeight(); doc.setFillColor(252, 252, 252); doc.rect(0, 0, pageWidth, 45, "F"); const logoImg = document.getElementById('pdf-logo-source'); if(logoImg && logoImg.src) { try { doc.addImage(logoImg, 'PNG', 15, 5, 70, 0); } catch(e){} } doc.setTextColor(0, 80, 60); doc.setFontSize(16); doc.setFont("helvetica", "bold"); doc.text("FISA PROIECT / PROJEKTBLATT", pageWidth - 15, 30, {align:"right"}); doc.setFontSize(10); doc.setTextColor(150); doc.setFont("helvetica", "normal"); doc.text("CLIENT & LOCATIE", 20, 60); doc.setFontSize(14); doc.setTextColor(0); doc.text(cleanText(p.name), 20, 68); doc.setFontSize(12); doc.text(doc.splitTextToSize(cleanText(p.address), 100), 20, 75); doc.setFontSize(10); doc.setTextColor(150); doc.text("INFO PROIECT", 130, 60); doc.setFontSize(12); doc.setTextColor(0); doc.text(`Start: ${p.startDate}`, 130, 68); if(p.endDate) doc.text(`Final: ${p.endDate}`, 130, 75); else doc.text(`Status: ${cleanText(trans[currentLang].stWork)}`, 130, 75); doc.setDrawColor(220); doc.line(20, 90, 190, 90); doc.setFontSize(14); doc.setTextColor(0, 150, 136); doc.text("DETALII TEREN", 20, 105); doc.setFontSize(12); doc.setTextColor(0); doc.text(`Dim: ${p.dims.l}m x ${p.dims.w}m (${p.dims.s}%)`, 20, 115); const areaVal = p.dims.area ? p.dims.area : (p.dims.l * p.dims.w).toFixed(2); doc.text(`SUPRAFATA: ${areaVal} mp`, 20, 122); doc.text(`PERIMETRU: ${p.dims.perim || 0} ml`, 100, 122); doc.setFontSize(10); doc.setTextColor(150); doc.text("LOGISTICA", 20, 135); doc.setFontSize(11); doc.setTextColor(0); doc.text(`Acces: ${cleanText(p.dims.access || '-')}`, 20, 142); doc.text(`Sapatura: ${cleanText(p.dims.digging || '-')}`, 100, 142); let y = 155; if(p.notes){ doc.setFontSize(14); doc.setTextColor(0, 150, 136); doc.text("NOTE", 20, y); y+=8; doc.setFontSize(11); doc.setTextColor(50); const splitNotes = doc.splitTextToSize(cleanText(p.notes), 170); doc.text(splitNotes, 20, y); y += splitNotes.length * 7 + 10; } doc.setFontSize(14); doc.setTextColor(0, 150, 136); doc.text("MATERIALE", 20, y); doc.setDrawColor(220); doc.line(20, y+3, 190, y+3); y+=15; doc.setFontSize(10); doc.setTextColor(150); doc.text("DENUMIRE", 20, y); doc.text("CANTITATE", 150, y); y+=10; doc.setFontSize(12); doc.setTextColor(0); if(p.materials) p.materials.forEach(m => { doc.text(cleanText(m.name), 20, y); doc.text(`${m.qty} ${cleanText(m.unit)}`, 150, y); y+=10; }); const dGen = new Date().toLocaleString(); doc.setDrawColor(200); doc.line(20, pageHeight - 15, pageWidth-20, pageHeight - 15); doc.setFontSize(9); doc.setTextColor(150); doc.text(`Generat: ${dGen}`, 20, pageHeight - 8); doc.text("Victor Tigoianu App", pageWidth - 20, pageHeight - 8, {align:"right"}); doc.save(`${cleanText(p.name).replace(/\s+/g,'_')}.pdf`); };
