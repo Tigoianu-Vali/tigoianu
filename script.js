@@ -14,49 +14,60 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// CONFIG & TRADUCERI
+// AUTH
+window.checkPin = () => {
+    const pin = document.getElementById('in-pin').value;
+    if (pin === "1990") { localStorage.setItem("victor_auth", "true"); document.getElementById('login-overlay').style.display = "none"; } 
+    else { document.getElementById('login-error').style.display = "block"; }
+};
+function checkAuth() { if (localStorage.getItem("victor_auth") === "true") document.getElementById('login-overlay').style.display = "none"; }
+
 const trans = {
     ro: {
         title: "Victor Tigoianu", active: "Proiecte Active", client: "Date Client",
         pName: "Nume Client", pAddr: "Adresă Șantier", pDate: "Data Începerii:", pEnd: "Data Finalizării:",
-        specs: "Detalii Teren & Logistică", l: "L (m)", w: "l (m)", s: "Pantă %",
-        mats: "Materiale", photos: "Documentație Foto", area: "Arie:",
+        specs: "Detalii Teren", l: "L (m)", w: "l (m)", s: "Pantă %",
+        mats: "Materiale", photos: "Foto", area: "Arie:",
         save: "SALVEAZĂ PROIECT", back: "Înapoi", hint: "Atinge pentru poze",
         stNew: "NOU", stWork: "ÎN LUCRU", stDone: "FINALIZAT",
-        mdTitle: "Detalii Proiect", mdMat: "Lista Materiale", mdGal: "Galerie Foto", mdNotes: "Note / Extra",
-        mdStatus: "Status Lucrare", mdNav: "Navigație",
+        mdTitle: "Detalii Proiect", mdMat: "Materiale", mdNotes: "Note",
+        mdStatus: "Status Lucrare",
         phMatName: "Caută sau scrie material...", phMatQty: "Cant.",
-        settingsTitle: "Liste", manageMats: "Materiale Existente", manageUnits: "Unități de Măsură",
+        settingsTitle: "Liste", manageMats: "Materiale", manageUnits: "Unități",
         phNewMat: "Material nou...", phNewUnit: "Unitate nouă...",
-        weather: "Cer Senin", loadingWeather: "Se localizează...",
         days: ["Duminică", "Luni", "Marți", "Miercuri", "Joi", "Vineri", "Sâmbătă"],
         shortDays: ["Dum", "Lun", "Mar", "Mie", "Joi", "Vin", "Sam"],
         months: ["Ianuarie", "Februarie", "Martie", "Aprilie", "Mai", "Iunie", "Iulie", "August", "Septembrie", "Octombrie", "Noiembrie", "Decembrie"],
         lblArea: "Suprafață (mp)", lblPerim: "Perimetru (ml)",
         lblAccess: "Acces Utilaj", lblDigging: "Tip Săpătură",
         accessOpts: ["Nu (Pietonal)", "Mini-Excavator", "Mare (Camion)"],
-        diggingOpts: ["Ușoară/Normală", "Grea (Pietriș)", "Moloz/Beton"]
+        diggingOpts: ["Ușoară/Normală", "Grea (Pietriș)", "Moloz/Beton"],
+        filterAll: "Toate", filterNew: "Noi", filterWork: "În Lucru", filterDone: "Finalizate", searchPh: "Caută client...",
+        lblTotal: "Total Ofertat", lblAdvance: "Avans Primit", lblBalance: "Rest de Plată", lblPaid: "ACHITAT INTEGRAL", lblFinance: "Financiar", markPaid: "Marchează Achitat",
+        addPhotosBtn: "Adaugă Poze"
     },
     de: {
         title: "Victor Tigoianu", active: "Aktive Projekte", client: "Kundendaten",
         pName: "Kundenname", pAddr: "Baustellenadresse", pDate: "Startdatum:", pEnd: "Fertigstellungsdatum:",
-        specs: "Gelände & Logistik", l: "L (m)", w: "B (m)", s: "Neig. %",
-        mats: "Materialien", photos: "Fotodokumentation", area: "Fläche:",
+        specs: "Gelände", l: "L (m)", w: "B (m)", s: "Neig. %",
+        mats: "Materialien", photos: "Fotos", area: "Fläche:",
         save: "PROJEKT SPEICHERN", back: "Zurück", hint: "Tippen für Fotos",
         stNew: "NEU", stWork: "IN ARBEIT", stDone: "FERTIG",
-        mdTitle: "Projektdetails", mdMat: "Materialliste", mdGal: "Fotogalerie", mdNotes: "Notizen / Extras",
-        mdStatus: "Projektstatus", mdNav: "Navigation",
+        mdTitle: "Projektdetails", mdMat: "Materialien", mdNotes: "Notizen",
+        mdStatus: "Projektstatus",
         phMatName: "Suchen oder eingeben...", phMatQty: "Menge",
-        settingsTitle: "Listen verwalten", manageMats: "Vorhandene Materialien", manageUnits: "Maßeinheiten",
+        settingsTitle: "Listen verwalten", manageMats: "Materialien", manageUnits: "Einheiten",
         phNewMat: "Neues Material...", phNewUnit: "Neue Einheit...",
-        weather: "Heiter", loadingWeather: "Standort wird gesucht...",
         days: ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"],
         shortDays: ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"],
         months: ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"],
         lblArea: "Fläche (m²)", lblPerim: "Umfang (lm)",
         lblAccess: "Maschinenzugang", lblDigging: "Grabungstyp",
         accessOpts: ["Nein (Fußgänger)", "Minibagger", "Groß (LKW)"],
-        diggingOpts: ["Leicht/Normal", "Schwer (Stein)", "Bauschutt/Beton"]
+        diggingOpts: ["Leicht/Normal", "Schwer (Stein)", "Bauschutt/Beton"],
+        filterAll: "Alle", filterNew: "Neu", filterWork: "In Arbeit", filterDone: "Fertig", searchPh: "Kunde suchen...",
+        lblTotal: "Gesamtangebot", lblAdvance: "Anzahlung", lblBalance: "Restbetrag", lblPaid: "VOLLSTÄNDIG BEZAHLT", lblFinance: "Finanzen", markPaid: "Als bezahlt markieren",
+        addPhotosBtn: "Fotos hinzufügen"
     }
 };
 
@@ -65,6 +76,9 @@ let projects = [];
 let tempMaterialList = [];
 let tempPhotosBase64 = []; 
 let currentProjectIndex = null; 
+let currentLightboxPhotos = [];
+let currentLightboxIndex = 0;
+let tempModalPhotos = [];
 
 let activeMaterialsRO = ["Gazon Rulou", "Pavaj", "Borduri", "Nisip", "Pământ vegetal", "Sistem Irigații"];
 let activeMaterialsDE = ["Rollrasen", "Pflastersteine", "Randsteine", "Sand", "Mutterboden", "Bewässerung"];
@@ -82,16 +96,20 @@ function loadRealtimeData() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    checkAuth();
     loadRealtimeData();
     changeLanguage('ro');
     document.getElementById('btn-lang-ro').classList.add('active-lang');
-    updateDateTime(); setInterval(updateDateTime, 1000);
+    
+    // CEAS REPARAT (PORNIT EXPLICIT)
+    updateDateTime(); 
+    setInterval(updateDateTime, 1000);
+    
     getRealWeather();
     document.getElementById('in-length').addEventListener('input', updateArea);
     document.getElementById('in-width').addEventListener('input', updateArea);
 });
 
-// LOGICA COMPRESIE
 function compressImage(file, quality=0.6, maxWidth=800) {
     return new Promise(resolve => {
         const reader = new FileReader(); reader.readAsDataURL(file);
@@ -113,31 +131,17 @@ function renderPhotoPreviews() {
     const g = document.getElementById('photo-previews');
     g.innerHTML = "";
     tempPhotosBase64.forEach((src, i) => {
-        g.innerHTML += `
-            <div class="photo-preview-item">
-                <img src="${src}">
-                <button type="button" class="btn-x" onclick="window.deleteTempPhoto(${i})">×</button>
-            </div>
-        `;
+        g.innerHTML += `<div class="photo-preview-item"><img src="${src}"><button type="button" class="btn-x" onclick="window.deleteTempPhoto(${i})">×</button></div>`;
     });
 }
 
 document.getElementById('in-photos').addEventListener('change', async e => {
     const files = Array.from(e.target.files);
-    for(const f of files){
-        try {
-            const b64 = await compressImage(f);
-            tempPhotosBase64.push(b64);
-        } catch(err) { console.error(err); }
-    }
-    renderPhotoPreviews();
-    e.target.value = "";
+    for(const f of files){ try { const b64 = await compressImage(f); tempPhotosBase64.push(b64); } catch(err) { console.error(err); } }
+    renderPhotoPreviews(); e.target.value = "";
 });
 
-window.deleteTempPhoto = (index) => {
-    tempPhotosBase64.splice(index, 1);
-    renderPhotoPreviews();
-};
+window.deleteTempPhoto = (index) => { tempPhotosBase64.splice(index, 1); renderPhotoPreviews(); };
 
 window.changeLanguage = (l) => {
     document.getElementById('btn-lang-ro').classList.remove('active-lang');
@@ -174,6 +178,15 @@ window.changeLanguage = (l) => {
     document.getElementById('new-mat-input').placeholder=t.phNewMat;
     document.getElementById('lbl-manage-units').innerText=t.manageUnits;
     document.getElementById('new-unit-input').placeholder=t.phNewUnit;
+    
+    // Traducere titluri carduri financiare (in Formular)
+    document.getElementById('label-finance').innerHTML=`<i class="fas fa-coins"></i> ${t.lblFinance} (€)`;
+    document.getElementById('lbl-total').innerText = t.lblTotal;
+    document.getElementById('lbl-advance').innerText = t.lblAdvance;
+
+    document.getElementById('search-input').placeholder = t.searchPh;
+    const filterOpts = document.getElementById('filter-status').options;
+    filterOpts[0].text = t.filterAll; filterOpts[1].text = t.filterNew; filterOpts[2].text = t.filterWork; filterOpts[3].text = t.filterDone;
 
     const sAccess = document.getElementById('in-access'); sAccess.innerHTML = "";
     t.accessOpts.forEach(o => { sAccess.innerHTML += `<option value="${o}">${o}</option>` });
@@ -227,113 +240,210 @@ function getRealWeather() {
     if(navigator.geolocation) navigator.geolocation.getCurrentPosition(p=>fetchW(p.coords.latitude, p.coords.longitude), ()=>fetchW(lat,lon)); else fetchW(lat,lon);
 }
 
-function updateDateTime(){ const n=new Date(); const t=trans[currentLang]; document.getElementById('display-date').innerText=`${t.days[n.getDay()]}, ${n.getDate()} ${t.months[n.getMonth()]}`; document.getElementById('display-time').innerText=n.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); }
+function updateDateTime(){ 
+    const n=new Date(); 
+    const t=trans[currentLang]; 
+    if(!t) return;
+    document.getElementById('display-date').innerText=`${t.days[n.getDay()]}, ${n.getDate()} ${t.months[n.getMonth()]}`; 
+    document.getElementById('display-time').innerText=n.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); 
+}
 
-function renderDashboard(){
-    const l=document.getElementById('client-list'); const t=trans[currentLang];
-    l.innerHTML=projects.map((p,i)=>{
+window.renderDashboard = () => {
+    const list = document.getElementById('client-list');
+    const t = trans[currentLang];
+    const searchTerm = document.getElementById('search-input').value.toLowerCase();
+    const statusFilter = document.getElementById('filter-status').value;
+
+    const filtered = projects.filter(p => {
+        const matchesSearch = p.name.toLowerCase().includes(searchTerm) || p.address.toLowerCase().includes(searchTerm);
+        const matchesStatus = statusFilter === 'all' || p.status === statusFilter;
+        return matchesSearch && matchesStatus;
+    });
+
+    list.innerHTML = filtered.map((p,i) => {
+        const originalIndex = projects.findIndex(proj => proj.id === p.id);
+        
         let c = p.status==='new'?"status-new":p.status==='work'?"status-work":"status-done";
         let stTxt = p.status==='new'?t.stNew : p.status==='work'?t.stWork : t.stDone;
-        let stColorClass = p.status==='new'?"txt-new" : p.status==='work'?"txt-work" : "txt-done";
+        let badgeColorClass = p.status==='new'?"badge-new" : p.status==='work'?"badge-work" : "badge-done";
         let dateStr = new Date(p.startDate).toLocaleDateString(currentLang==='ro'?'ro-RO':'de-DE');
-        return `<div class="card client-card ${c}" onclick="openModal(${i})"><div class="card-details"><div class="status-text-row"><span class="${stColorClass}">${stTxt}</span></div><h4>${p.name}</h4><p><i class="fas fa-map-marker-alt"></i> ${p.address}</p><div class="card-date"><i class="far fa-calendar-alt"></i> ${dateStr}</div></div><div class="card-actions-container"><button class="btn-delete" onclick="window.deleteProject(${i}, event)"><i class="fas fa-trash"></i></button>${p.status!=='done'?`<button class="btn-finish" onclick="window.toggleStatus(${i}, event)"><i class="fas fa-check"></i></button>`:`<button class="btn-undo" onclick="window.toggleStatus(${i}, event)"><i class="fas fa-undo"></i></button>`}</div></div>`;
+        
+        let finBadge = "";
+        let total = p.financial ? p.financial.total : 0;
+        let advance = p.financial ? p.financial.advance : 0;
+        let rest = total - advance;
+        
+        if (total > 0) {
+            if (rest <= 0) finBadge = `<span class="money-badge money-ok"><i class="fas fa-check"></i> ${t.lblPaid}</span>`;
+            else finBadge = `<span class="money-badge money-bad">REST: ${rest} €</span>`;
+        }
+
+        return `<div class="card client-card ${c}" onclick="openModal(${originalIndex})">
+            <div class="card-details">
+                <div class="card-top-row">
+                    <span class="status-badge ${badgeColorClass}">${stTxt}</span>
+                    ${finBadge}
+                </div>
+                <h4>${p.name}</h4>
+                <p><i class="fas fa-map-marker-alt"></i> ${p.address}</p>
+            </div>
+            <div class="card-actions-container">
+                <button class="btn-delete" onclick="window.deleteProject(${originalIndex}, event)"><i class="fas fa-trash"></i></button>
+                ${p.status!=='done'?`<button class="btn-finish" onclick="window.toggleStatus(${originalIndex}, event)"><i class="fas fa-check"></i></button>`:`<button class="btn-undo" onclick="window.toggleStatus(${originalIndex}, event)"><i class="fas fa-undo"></i></button>`}
+            </div>
+        </div>`;
     }).join('');
-}
+};
 
 function cleanText(str) { if(!str) return ""; return str.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }
 window.showView = (id) => { document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); document.getElementById('view-'+id).classList.add('active'); document.getElementById('fab-add').style.display=id==='dashboard'?'flex':'none'; };
 window.openSettingsModal = () => document.getElementById('modal-settings').classList.remove('hidden');
 window.closeSettingsModal = () => document.getElementById('modal-settings').classList.add('hidden');
 window.closeModal = () => document.getElementById('modal-details').classList.add('hidden');
-window.openLightbox = (src) => { document.getElementById('lightbox-img').src = src; document.getElementById('lightbox-view').classList.remove('hidden'); };
-window.closeLightbox = () => document.getElementById('lightbox-view').classList.add('hidden');
 window.toggleStatus = async (i,e) => { e.stopPropagation(); const p=projects[i]; const r=doc(db,"projects",p.id); const s=p.status==='done'?'new':'done'; const ed=s==='done'?new Date().toISOString().split('T')[0]:null; await updateDoc(r,{status:s,endDate:ed}); };
 window.deleteProject = async (index, event) => { event.stopPropagation(); const confirmMsg = currentLang === 'ro' ? "Sigur ștergi acest proiect?" : "Projekt wirklich löschen?"; if(confirm(confirmMsg)) { const p = projects[index]; try { await deleteDoc(doc(db, "projects", p.id)); } catch (e) { alert("Eroare: " + e.message); } } };
 window.toggleEndDateField = (e) => { const c=document.getElementById('end-date-container'); if(e.value==='done'){ const d=new Date().toISOString().split('T')[0]; c.innerHTML=`<div class="detail-row"><div class="detail-label">${trans[currentLang].pEnd}</div><input type="date" id="edit-end-date" class="modal-input" value="${d}"></div>`;} else c.innerHTML=''; };
 
 // SAVE FORM
-document.getElementById('project-form').addEventListener('submit',async e=>{ e.preventDefault(); try { await addDoc(collection(db,"projects"), { name:document.getElementById('in-name').value, address:document.getElementById('in-address').value, startDate:document.getElementById('in-start-date').value, endDate:null, status:'new', dims:{ l:parseFloat(document.getElementById('in-length').value)||0, w:parseFloat(document.getElementById('in-width').value)||0, s:parseFloat(document.getElementById('in-slope').value)||0, area:parseFloat(document.getElementById('in-area').value)||0, perim:parseFloat(document.getElementById('in-perim').value)||0, access:document.getElementById('in-access').value, digging:document.getElementById('in-digging').value }, materials:[...tempMaterialList], photos:[...tempPhotosBase64], notes:document.getElementById('in-notes').value }); e.target.reset(); tempMaterialList=[]; document.getElementById('mat-list').innerHTML=""; document.getElementById('photo-previews').innerHTML=""; tempPhotosBase64=[]; window.showView('dashboard'); } catch (err) { alert("Eroare la salvare!"); console.error(err); } });
+document.getElementById('project-form').addEventListener('submit',async e=>{ e.preventDefault(); try { 
+    await addDoc(collection(db,"projects"), { 
+        name:document.getElementById('in-name').value, address:document.getElementById('in-address').value, startDate:document.getElementById('in-start-date').value, endDate:null, status:'new', 
+        dims:{ l:parseFloat(document.getElementById('in-length').value)||0, w:parseFloat(document.getElementById('in-width').value)||0, s:parseFloat(document.getElementById('in-slope').value)||0, area:parseFloat(document.getElementById('in-area').value)||0, perim:parseFloat(document.getElementById('in-perim').value)||0, access:document.getElementById('in-access').value, digging:document.getElementById('in-digging').value }, 
+        financial:{ total:parseFloat(document.getElementById('in-total').value)||0, advance:parseFloat(document.getElementById('in-advance').value)||0 }, 
+        materials:[...tempMaterialList], photos:[...tempPhotosBase64], notes:document.getElementById('in-notes').value 
+    }); 
+    e.target.reset(); tempMaterialList=[]; document.getElementById('mat-list').innerHTML=""; document.getElementById('photo-previews').innerHTML=""; tempPhotosBase64=[]; window.showView('dashboard'); 
+} catch (err) { alert("Eroare la salvare!"); console.error(err); } });
 
 window.saveEditedProject = async () => {
     if (currentProjectIndex === null) return;
-    const p = projects[currentProjectIndex];
-    const docRef = doc(db, "projects", p.id);
-    
-    // Colectam noile materiale din input-uri
+    const p = projects[currentProjectIndex]; const docRef = doc(db, "projects", p.id);
     const newMats = [];
-    document.querySelectorAll('.editable-material-row').forEach(row => {
-        newMats.push({
-            name: row.querySelector('.mat-name-edit').value,
-            qty: row.querySelector('.mat-qty-edit').value,
-            unit: row.querySelector('.mat-unit-edit').value
-        });
-    });
-
+    document.querySelectorAll('.editable-material-row').forEach(row => { newMats.push({ name: row.querySelector('.mat-name-edit').value, qty: row.querySelector('.mat-qty-edit').value, unit: row.querySelector('.mat-unit-edit').value }); });
     const data = { 
-        status: document.getElementById('edit-status').value, 
-        name: document.getElementById('edit-name').value, 
-        address: document.getElementById('edit-address').value, 
-        startDate: document.getElementById('edit-date').value, 
-        dims: { 
-            l: parseFloat(document.getElementById('edit-l').value)||0, 
-            w: parseFloat(document.getElementById('edit-w').value)||0, 
-            s: parseFloat(document.getElementById('edit-s').value)||0, 
-            area: parseFloat(document.getElementById('edit-area').value)||0, 
-            perim: parseFloat(document.getElementById('edit-perim').value)||0, 
-            access: document.getElementById('edit-access').value, 
-            digging: document.getElementById('edit-digging').value 
-        }, 
-        materials: newMats, // Salvam lista actualizata
-        notes: document.getElementById('edit-notes').value 
+        status: document.getElementById('edit-status').value, name: document.getElementById('edit-name').value, address: document.getElementById('edit-address').value, startDate: document.getElementById('edit-date').value, 
+        dims: { l: parseFloat(document.getElementById('edit-l').value)||0, w: parseFloat(document.getElementById('edit-w').value)||0, s: parseFloat(document.getElementById('edit-s').value)||0, area: parseFloat(document.getElementById('edit-area').value)||0, perim: parseFloat(document.getElementById('edit-perim').value)||0, access: document.getElementById('edit-access').value, digging: document.getElementById('edit-digging').value }, 
+        financial: { total:parseFloat(document.getElementById('edit-total').value)||0, advance:parseFloat(document.getElementById('edit-advance').value)||0 }, 
+        materials: newMats, notes: document.getElementById('edit-notes').value,
+        photos: tempModalPhotos
     }; 
-    const ed = document.getElementById('edit-end-date'); 
-    if (ed) data.endDate = ed.value; else if (data.status !== 'done') data.endDate = null; 
-    
-    await updateDoc(docRef, data); 
-    document.getElementById('modal-details').classList.add('hidden');
+    const ed = document.getElementById('edit-end-date'); if (ed) data.endDate = ed.value; else if (data.status !== 'done') data.endDate = null; 
+    await updateDoc(docRef, data); document.getElementById('modal-details').classList.add('hidden');
 };
+
+window.markAsPaid = () => {
+    const total = document.getElementById('edit-total').value;
+    document.getElementById('edit-advance').value = total;
+    window.updateBalanceUI(); 
+};
+
+window.updateBalanceUI = () => {
+    const total = parseFloat(document.getElementById('edit-total').value) || 0;
+    const advance = parseFloat(document.getElementById('edit-advance').value) || 0;
+    const rest = total - advance;
+    const t = trans[currentLang];
+    const card = document.querySelector('.balance-card');
+    const title = card.querySelector('.balance-title');
+    const amount = card.querySelector('.balance-amount');
+    if (rest <= 0) { card.className = 'balance-card ok'; title.innerText = t.lblPaid; amount.innerHTML = '<i class="fas fa-check-circle"></i>'; } 
+    else { card.className = 'balance-card bad'; title.innerText = t.lblBalance; amount.innerHTML = `${rest} <small>€</small>`; }
+};
+
+// FOTO IN MODAL
+function renderModalPhotoGrid() {
+    const grid = document.getElementById('modal-photo-grid');
+    grid.innerHTML = "";
+    tempModalPhotos.forEach((src, i) => {
+        grid.innerHTML += `<div class="photo-preview-item"><img src="${src}" onclick="openLightbox(${i}, 'temp')"><button type="button" class="btn-x" onclick="window.deletePhotoFromModal(${i})">×</button></div>`;
+    });
+}
+
+window.handleModalPhotoUpload = async (input) => {
+    const files = Array.from(input.files);
+    for(const f of files){ try { const b64 = await compressImage(f); tempModalPhotos.push(b64); } catch(err) { console.error(err); } }
+    renderModalPhotoGrid(); input.value = "";
+}
+
+window.deletePhotoFromModal = (index) => { tempModalPhotos.splice(index, 1); renderModalPhotoGrid(); }
+
+window.openLightbox = (index, context) => {
+    if (context === 'temp') { currentLightboxPhotos = tempModalPhotos; }
+    else if (typeof context === 'number') { currentLightboxPhotos = projects[context].photos || []; }
+    currentLightboxIndex = index; updateLightboxImage(); document.getElementById('lightbox-view').classList.remove('hidden');
+};
+
+window.changeLightboxImage = (direction) => {
+    if (currentLightboxPhotos.length === 0) return;
+    currentLightboxIndex += direction;
+    if (currentLightboxIndex >= currentLightboxPhotos.length) currentLightboxIndex = 0;
+    if (currentLightboxIndex < 0) currentLightboxIndex = currentLightboxPhotos.length - 1;
+    updateLightboxImage();
+};
+
+function updateLightboxImage() { document.getElementById('lightbox-img').src = currentLightboxPhotos[currentLightboxIndex]; }
+window.closeLightbox = () => document.getElementById('lightbox-view').classList.add('hidden');
 
 window.openModal = (index) => {
     currentProjectIndex = index; const p = projects[index]; const t = trans[currentLang];
+    tempModalPhotos = p.photos ? [...p.photos] : [];
     const encodedAddr = encodeURIComponent(p.address); const mapsLink = `https://www.google.com/maps/dir/?api=1&destination=${encodedAddr}`; const wazeLink = `https://waze.com/ul?q=${encodedAddr}&navigate=yes`;
     let endDateHTML = ''; if (p.status === 'done') endDateHTML = `<div class="detail-row"><div class="detail-label">${t.pEnd}</div><input type="date" id="edit-end-date" class="modal-input" value="${p.endDate || ''}"></div>`;
     const genOpts = (opts, sel) => opts.map(o => `<option value="${o}" ${o===sel?'selected':''}>${o}</option>`).join('');
     
-    // GENERARE INPUT-URI MATERIALE
-    const matHTML = p.materials?.map((m, i) => `
-        <li class="editable-material-row">
-            <input type="text" class="mat-name-edit" value="${m.name}" placeholder="Nume">
-            <div class="mat-qty-group">
-                <input type="number" class="mat-qty-edit" value="${m.qty}" placeholder="0">
-                <input type="text" class="mat-unit-edit" value="${m.unit}" placeholder="um">
-            </div>
-            <button class="btn-del-mat" onclick="this.parentElement.remove()">×</button>
-        </li>
-    `).join('') || '';
+    const total = p.financial ? p.financial.total : 0;
+    const advance = p.financial ? p.financial.advance : 0;
+    const rest = total - advance;
+    const balanceClass = rest <= 0 ? 'ok' : 'bad';
+    const balanceTitle = rest <= 0 ? t.lblPaid : t.lblBalance;
+    const balanceAmount = rest <= 0 ? '<i class="fas fa-check-circle"></i>' : `${rest} <small>€</small>`;
 
-    const photoHTML = `<div class="modal-photos-grid">${p.photos?.map(s => `<img src="${s}" onclick="openLightbox('${s}')">`).join('') || ''}</div>`;
+    const matHTML = p.materials?.map((m, i) => `<li class="editable-material-row"><input type="text" class="mat-name-edit" value="${m.name}" placeholder="Nume"><div class="mat-qty-group"><input type="number" class="mat-qty-edit" value="${m.qty}" placeholder="0"><input type="text" class="mat-unit-edit" value="${m.unit}" placeholder="um"></div><button class="btn-del-mat" onclick="this.parentElement.remove()">×</button></li>`).join('') || '';
     
     document.getElementById('modal-body').innerHTML = `
-        <div class="detail-row"><div class="detail-label">${t.mdStatus}</div><select id="edit-status" class="modal-input" onchange="toggleEndDateField(this)"><option value="new" ${p.status==='new'?'selected':''}>${t.stNew}</option><option value="work" ${p.status==='work'?'selected':''}>${t.stWork}</option><option value="done" ${p.status==='done'?'selected':''}>${t.stDone}</option></select></div>
-        <div class="detail-row"><div class="detail-label">${t.pName}</div><input type="text" id="edit-name" class="modal-input" value="${p.name}"></div>
-        <div class="detail-row"><div class="detail-label">${t.pAddr}</div><input type="text" id="edit-address" class="modal-input" value="${p.address}">
-        <div class="nav-buttons-container">
-            <a href="${mapsLink}" target="_blank" class="btn-nav btn-maps"><i class="fas fa-map-marked-alt"></i> Maps</a>
-            <a href="${wazeLink}" target="_blank" class="btn-nav btn-waze"><i class="fab fa-waze"></i> Waze</a>
-        </div></div>
-        <div class="detail-row"><div class="detail-label">${t.pDate}</div><input type="date" id="edit-date" class="modal-input" value="${p.startDate}"></div>
-        <div id="end-date-container">${endDateHTML}</div>
-        <div class="detail-row grid-3"><div><span>${t.l}</span><input id="edit-l" class="modal-input" value="${p.dims.l}"></div><div><span>${t.w}</span><input id="edit-w" class="modal-input" value="${p.dims.w}"></div><div><span>${t.s}</span><input id="edit-s" class="modal-input" value="${p.dims.s}"></div></div>
-        <div class="detail-row grid-2"><div><span>${t.lblArea}</span><input id="edit-area" class="modal-input" value="${p.dims.area||0}"></div><div><span>${t.lblPerim}</span><input id="edit-perim" class="modal-input" value="${p.dims.perim||0}"></div></div>
-        <div class="detail-row grid-2"><div><span>${t.lblAccess}</span><select id="edit-access" class="modal-input">${genOpts(t.accessOpts, p.dims.access)}</select></div><div><span>${t.lblDigging}</span><select id="edit-digging" class="modal-input">${genOpts(t.diggingOpts, p.dims.digging)}</select></div></div>
-        <div class="detail-row"><div class="detail-label">${t.mdNotes}</div><textarea id="edit-notes" class="modal-textarea">${p.notes||''}</textarea></div>
-        
-        <div class="detail-row">
-            <div class="detail-label" style="display:flex;justify-content:space-between;">${t.mdMat}</div>
+        <div class="modal-section sec-client">
+            <div class="modal-section-header"><i class="fas fa-user-circle"></i> ${t.client}</div>
+            <div class="detail-row"><div class="detail-label">${t.mdStatus}</div><select id="edit-status" class="modal-input" onchange="toggleEndDateField(this)"><option value="new" ${p.status==='new'?'selected':''}>${t.stNew}</option><option value="work" ${p.status==='work'?'selected':''}>${t.stWork}</option><option value="done" ${p.status==='done'?'selected':''}>${t.stDone}</option></select></div>
+            <div class="detail-row"><div class="detail-label">${t.pName}</div><input type="text" id="edit-name" class="modal-input" value="${p.name}"></div>
+            <div class="detail-row"><div class="detail-label">${t.pAddr}</div><input type="text" id="edit-address" class="modal-input" value="${p.address}"></div>
+            <div class="nav-buttons-container"><a href="${mapsLink}" target="_blank" class="btn-nav btn-maps"><i class="fas fa-map-marked-alt"></i> Maps</a><a href="${wazeLink}" target="_blank" class="btn-nav btn-waze"><i class="fab fa-waze"></i> Waze</a></div>
+            <div class="detail-row" style="margin-top:10px;"><div class="detail-label">${t.pDate}</div><input type="date" id="edit-date" class="modal-input" value="${p.startDate}"></div>
+            <div id="end-date-container">${endDateHTML}</div>
+        </div>
+        <div class="modal-section sec-finance">
+            <div class="modal-section-header"><i class="fas fa-coins"></i> ${t.lblFinance}</div>
+            <div class="finance-grid">
+                <div class="fin-input-box"><span class="fin-label">${t.lblTotal}</span><input type="number" id="edit-total" value="${total}" placeholder="0" oninput="window.updateBalanceUI()"></div>
+                <div class="fin-input-box"><span class="fin-label">${t.lblAdvance}</span><input type="number" id="edit-advance" value="${advance}" placeholder="0" oninput="window.updateBalanceUI()"></div>
+            </div>
+            <button class="btn-mark-paid" onclick="markAsPaid()"><i class="fas fa-check-double"></i> ${t.markPaid}</button>
+            <div class="balance-card ${balanceClass}">
+                <div class="balance-title">${balanceTitle}</div>
+                <div class="balance-amount">${balanceAmount}</div>
+            </div>
+        </div>
+        <div class="modal-section sec-specs">
+            <div class="modal-section-header"><i class="fas fa-drafting-compass"></i> ${t.specs}</div>
+            <div class="detail-row grid-3"><div><span>${t.l}</span><input id="edit-l" class="modal-input" value="${p.dims.l}"></div><div><span>${t.w}</span><input id="edit-w" class="modal-input" value="${p.dims.w}"></div><div><span>${t.s}</span><input id="edit-s" class="modal-input" value="${p.dims.s}"></div></div>
+            <div class="detail-row grid-2"><div><span>${t.lblArea}</span><input id="edit-area" class="modal-input" value="${p.dims.area||0}"></div><div><span>${t.lblPerim}</span><input id="edit-perim" class="modal-input" value="${p.dims.perim||0}"></div></div>
+            <div class="detail-row grid-2"><div><span>${t.lblAccess}</span><select id="edit-access" class="modal-input">${genOpts(t.accessOpts, p.dims.access)}</select></div><div><span>${t.lblDigging}</span><select id="edit-digging" class="modal-input">${genOpts(t.diggingOpts, p.dims.digging)}</select></div></div>
+        </div>
+        <div class="modal-section sec-notes">
+            <div class="modal-section-header"><i class="fas fa-sticky-note"></i> ${t.mdNotes}</div>
+            <textarea id="edit-notes" class="modal-textarea">${p.notes||''}</textarea>
+        </div>
+        <div class="modal-section sec-mat">
+            <div class="modal-section-header"><i class="fas fa-boxes"></i> ${t.mdMat}</div>
             <ul id="edit-mat-list" class="styled-list" style="padding:0">${matHTML}</ul>
         </div>
-        
-        ${photoHTML}`;
+        <div class="modal-section sec-photo">
+            <div class="modal-section-header"><i class="fas fa-images"></i> ${t.photos}</div>
+            <button class="btn-add-photo-modal" onclick="document.getElementById('edit-add-photo').click()"><i class="fas fa-plus"></i> ${t.addPhotosBtn}</button>
+            <input type="file" id="edit-add-photo" hidden multiple onchange="window.handleModalPhotoUpload(this)">
+            <div id="modal-photo-grid" class="modal-photos-grid"></div>
+        </div>
+        `;
+    
+    renderModalPhotoGrid();
     document.getElementById('modal-details').classList.remove('hidden');
 };
 
