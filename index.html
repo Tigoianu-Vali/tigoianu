@@ -1,251 +1,437 @@
 <!DOCTYPE html>
-<html lang="ro">
+<html class="dark" lang="ro">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>Victor Tigoianu Management</title>
     
-    <link rel="icon" type="image/png" href="icon.png">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "pink-primary": "#f42559",
+                        "pink-primary-dark": "#d61e4c",
+                        "bg-pink-light": "#f8f5f6",
+                        "bg-pink-dark": "#221014",
+                        "green-primary": "#11d473",
+                        "green-primary-dark": "#0db85f",
+                        "bg-green-light": "#f0fdf4",
+                        "bg-green-dark": "#14532d",
+                        "card-green-dark": "#1c2e25",
+                        "card-light": "#ffffff",
+                        "orange-primary": "#f97316",
+                        "blue-primary": "#3b82f6",
+                        "gray-primary": "#6b7280",
+                        "purple-primary": "#a855f7",
+                        "yellow-primary": "#eab308",
+                        "slate-900": "#0f172a",
+                        "slate-800": "#1e293b",
+                        "slate-700": "#334155",
+                    },
+                    fontFamily: { "display": ["Manrope", "sans-serif"] },
+                },
+            },
+        }
+    </script>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .lang-switch {
+            transition: all 0.3s ease;
+        }
+        .lang-switch:hover {
+            transform: scale(1.05);
+        }
+        .lang-switch:active {
+            transform: scale(0.95);
+        }
+        .lang-switch.changed {
+            animation: pulse-color 0.5s ease;
+        }
+        @keyframes pulse-color {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+            50% { transform: scale(1.1); box-shadow: 0 0 20px 5px rgba(59, 130, 246, 0.7); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        .opacity-0 { opacity: 0; }
+        .transition-opacity { transition: opacity 0.3s ease; }
+    </style>
+    
+    <!-- Materials Datalist -->
+    <datalist id="materials-datalist">
+        <option value="Beton">
+        <option value="Ciment">
+        <option value="Nisip">
+        <option value="Pietris">
+        <option value="Otel">
+        <option value="Caramida">
+        <option value="Bca">
+        <option value="Polistiren">
+        <option value="Grile">
+        <option value="Gazon">
+        <option value="Pamant">
+        <option value="Piatra">
+        <option value="Balast">
+        <option value="Scafe">
+        <option value="Drenuri">
+    </datalist>
+    
 </head>
-<body>
 
-    <div id="login-overlay" class="login-screen">
-        <div class="login-box">
-            <img src="logo.png" alt="Logo" class="login-logo">
-            <h3>Securitate</h3>
-            <p>Introdu codul de acces</p>
-            <input type="tel" id="in-pin" placeholder="PIN" maxlength="4">
-            <button onclick="checkPin()">Accesează</button>
-            <p id="login-error" style="color:red; display:none; margin-top:10px;">Cod incorect!</p>
-        </div>
-    </div>
+<body class="bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-white antialiased transition-colors duration-300 font-display">
 
-    <img id="pdf-logo-source" src="logo.png" style="display:none;" alt="logo source">
-
-    <div id="app-container">
+    <!-- DASHBOARD PAGE -->
+    <div id="dashboard-page" class="relative min-h-screen w-full overflow-x-hidden pb-32">
         
-        <header class="app-header">
-            <div class="header-top">
-                <div class="brand">
-                    <img src="logo.png" alt="Logo" class="header-logo-img">
+        <!-- Header -->
+        <div class="sticky top-0 z-30 px-5 pt-8 pb-4 flex items-center justify-between bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border-b border-slate-200 dark:border-slate-700">
+            <div class="flex items-center gap-3">
+                <div class="size-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 overflow-hidden border-2 border-white shadow-lg">
+                    <img class="w-full h-full object-cover" src="icon.png" alt="Victor" onerror="this.src='https://ui-avatars.com/api/?name=Victor&background=11d473&color=fff&size=100&bold=true'"/>
                 </div>
-                <div class="header-actions">
-                    <div class="lang-selector">
-                        <button id="btn-lang-ro" onclick="changeLanguage('ro')">RO</button>
-                        <button id="btn-lang-de" onclick="changeLanguage('de')">DE</button>
-                    </div>
+                <div>
+                    <h1 class="text-xl font-extrabold text-slate-800 dark:text-white tracking-tight">Victor Tigoianu</h1>
+                    <p class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Management</p>
                 </div>
             </div>
             
-            <div class="dashboard-widget">
-                <div class="date-time-container">
-                    <h2 id="display-date">--</h2>
-                    <p id="display-time">00:00</p>
-                </div>
-                
-                <div class="weather-container">
-                    <div class="weather-current">
-                        <i id="weather-icon-main" class="fas fa-sun"></i>
-                        <div class="weather-text">
-                            <span id="display-temp">--°C</span>
-                            <small id="display-weather-desc">...</small>
+            <div class="flex items-center gap-2">
+                <button onclick="openMaterialsLibrary()" class="lang-switch size-10 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white flex items-center justify-center shadow-lg"><span class="material-symbols-outlined">construction</span></button>
+                <button onclick="toggleLanguage()" id="lang-btn" class="lang-switch size-10 rounded-full bg-gradient-to-r from-orange-500 to-red-500 text-white flex items-center justify-center shadow-lg font-bold text-xs">RO</button>
+                <button onclick="toggleTheme()" class="size-10 rounded-full bg-white dark:bg-slate-800 border border-green-200 dark:border-green-700 shadow text-green-600 dark:text-green-400 flex items-center justify-center">
+                    <span class="material-symbols-outlined">dark_mode</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="px-5 space-y-4">
+            <!-- Weather Widget -->
+            <div id="weather-widget" class="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-lg border border-slate-200 dark:border-slate-700">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="flex items-center gap-1 mb-1">
+                            <span class="material-symbols-outlined text-blue-500">location_on</span>
+                            <span id="weather-location" class="font-bold text-slate-700 dark:text-slate-300">Se incarca...</span>
                         </div>
+                        <div class="flex items-baseline gap-2">
+                            <span class="text-3xl font-bold text-slate-800 dark:text-white">--</span>
+                            <span class="text-lg text-slate-500">°C</span>
+                        </div>
+                        <div id="weather-desc" class="text-2xl">Se incarca...</div>
                     </div>
-                    <div id="forecast-list" class="forecast-mini"></div>
+                    <div class="text-right">
+                        <span id="weather-icon" class="text-5xl">sunny</span>
+                    </div>
                 </div>
+                <!-- Detailed Forecast -->
+                <div id="weather-forecast" class="flex justify-between mt-4 pt-4 border-t border-slate-200 dark:border-slate-700"></div>
+            </div>
+
+            <!-- Search -->
+            <div class="relative mb-4">
+                <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">search</span>
+                <input type="text" id="search-input" placeholder="Cauta..."
+                       class="w-full pl-12 pr-4 py-3 rounded-full bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm">
+            </div>
+
+            <!-- Filters -->
+            <div class="flex gap-2 overflow-x-auto pb-1">
+                <button onclick="setFilter('all')" class="filter-btn px-4 py-2 rounded-full text-sm font-bold bg-green-500 text-white whitespace-nowrap">Toate</button>
+                <button onclick="setFilter('new')" class="filter-btn px-4 py-2 rounded-full text-sm font-bold bg-blue-500 text-white whitespace-nowrap">Noi</button>
+                <button onclick="setFilter('work')" class="filter-btn px-4 py-2 rounded-full text-sm font-bold bg-orange-500 text-white whitespace-nowrap">In Lucru</button>
+                <button onclick="setFilter('done')" class="filter-btn px-4 py-2 rounded-full text-sm font-bold bg-green-500 text-white whitespace-nowrap">Finalizate</button>
+            </div>
+        </div>
+
+        <div class="px-5 space-y-4 mt-4">
+            <!-- Projects Section -->
+            <h3 class="text-lg font-bold text-slate-700 dark:text-white">Proiecte Active</h3>
+            <div id="projects-container" class="space-y-3"></div>
+        </div>
+
+        <!-- FAB -->
+        <button onclick="openNewProjectForm()" class="fixed bottom-6 right-6 size-14 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-full shadow-lg shadow-green-500/30 hover:scale-105 transition-transform z-50 flex items-center justify-center">
+            <span class="material-symbols-outlined text-3xl">add</span>
+        </button>
+    </div>
+
+    <!-- PROJECT DETAILS PAGE -->
+    <div id="details-page" class="hidden min-h-screen bg-white dark:bg-slate-900">
+        
+        <header class="sticky top-0 z-50 flex items-center justify-between px-4 py-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200 dark:border-slate-700">
+            <button onclick="showDashboard()" class="size-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h1 id="detail-title" class="text-lg font-bold text-slate-800 dark:text-slate-200 truncate px-2">Detalii</h1>
+            <div class="flex gap-2">
+                <button onclick="openEditProject()" class="size-10 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 flex items-center justify-center">
+                    <span class="material-symbols-outlined">edit</span>
+                </button>
+                <button onclick="exportToPdf()" class="size-10 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                    <span class="material-symbols-outlined">description</span>
+                </button>
             </div>
         </header>
 
-        <main id="main-content">
-            <div id="view-dashboard" class="view active">
-                <div class="section-header">
-                    <h3 id="label-active-projects">Proiecte Active</h3>
-                </div>
-                
-                <div class="filter-container">
-                    <div class="search-wrapper">
-                        <i class="fas fa-search"></i>
-                        <input type="text" id="search-input" placeholder="Caută..." onkeyup="renderDashboard()">
-                    </div>
-                    <div class="select-wrapper">
-                        <select id="filter-status" onchange="renderDashboard()">
-                            <option value="all">Toate</option>
-                            <option value="new">Noi</option>
-                            <option value="work">În Lucru</option>
-                            <option value="done">Finalizate</option>
-                        </select>
-                        <i class="fas fa-chevron-down select-arrow"></i>
+        <main class="p-4 space-y-4 pb-24">
+            
+            <!-- Client -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow border-l-4 border-blue-500">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-lg font-bold text-blue-700 dark:text-blue-400">Detalii Client</h2>
+                    <div class="flex gap-2">
+                        <a id="btn-call" href="#" class="size-10 rounded-full bg-green-500 text-white flex items-center justify-center"><span class="material-symbols-outlined">call</span></a>
+                        <a id="btn-message" href="#" class="size-10 rounded-full bg-blue-500 text-white flex items-center justify-center"><span class="material-symbols-outlined">message</span></a>
                     </div>
                 </div>
-
-                <div id="client-list" class="cards-grid"></div>
+                <div class="flex items-center gap-3 mb-3">
+                    <div id="detail-client-avatar" class="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-lg">VI</div>
+                    <div>
+                        <p id="detail-client-name" class="font-bold text-slate-900 dark:text-white">Nume Client</p>
+                        <!-- Map Preview -->
+                        <div id="detail-map" class="hidden mt-1 mb-1">
+                            <a id="btn-map-preview" href="#" target="_blank" class="block w-32 h-16 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 relative">
+                                <img id="map-preview-img" src="" alt="Map" class="w-full h-full object-cover opacity-80">
+                                <div class="absolute inset-0 flex items-center justify-center bg-black/20">
+                                    <span class="material-symbols-outlined text-white text-xl drop-shadow-lg">location_on</span>
+                                </div>
+                            </a>
+                        </div>
+                        <p id="detail-client-phone" class="text-sm text-blue-600 flex items-center gap-1"><span class="material-symbols-outlined text-xs">phone</span></p>
+                        <p id="detail-client-address" class="text-sm text-slate-500 flex items-center gap-1"><span class="material-symbols-outlined text-xs">location_on</span> Adresa...</p>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <a id="btn-waze" href="#" class="flex-1 py-2.5 rounded-lg bg-[#33CCFF] text-white text-sm font-bold flex items-center justify-center gap-1"><span class="material-symbols-outlined">directions</span> Waze</a>
+                    <a id="btn-maps" href="#" class="flex-1 py-2.5 rounded-lg bg-[#34A853] text-white text-sm font-bold flex items-center justify-center gap-1"><span class="material-symbols-outlined">map</span> Maps</a>
+                </div>
             </div>
 
-            <div id="view-form" class="view">
-                <div class="form-nav">
-                    <button type="button" class="btn-back" onclick="showView('dashboard')">
-                        <i class="fas fa-arrow-left"></i> <span id="btn-back-text">Înapoi</span>
+            <!-- Status -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow border-l-4 border-orange-500">
+                <h2 class="text-lg font-bold text-orange-600 mb-3">Status Lucrare</h2>
+                <div class="grid grid-cols-3 gap-2">
+                    <button onclick="changeProjectStatus('new')" id="status-new" class="py-3 rounded-xl border-2 border-blue-200 dark:border-blue-700 text-center bg-blue-50 dark:bg-blue-900/20">
+                        <span class="material-symbols-outlined block mx-auto mb-1 text-blue-500">new_releases</span>
+                        <span class="text-xs font-bold text-blue-700 dark:text-blue-400">Nou</span>
                     </button>
-                    <h2 id="form-title">Șantier Nou</h2>
+                    <button onclick="changeProjectStatus('work')" id="status-work" class="py-3 rounded-xl border-2 border-orange-200 dark:border-orange-700 text-center bg-orange-50 dark:bg-orange-900/20">
+                        <span class="material-symbols-outlined block mx-auto mb-1 text-orange-500">construction</span>
+                        <span class="text-xs font-bold text-orange-700 dark:text-orange-400">In Lucru</span>
+                    </button>
+                    <button onclick="changeProjectStatus('done')" id="status-done" class="py-3 rounded-xl border-2 border-green-200 dark:border-green-700 text-center bg-green-50 dark:bg-green-900/20">
+                        <span class="material-symbols-outlined block mx-auto mb-1 text-green-500">check_circle</span>
+                        <span class="text-xs font-bold text-green-700 dark:text-green-400">Finalizat</span>
+                    </button>
                 </div>
-
-                <form id="project-form">
-                    <div class="card sec-client">
-                        <h3 id="label-client-data"><i class="fas fa-user-circle"></i> Client</h3>
-                        <input type="text" id="in-name" required placeholder="Nume Client">
-                        <div class="input-with-btn">
-                            <input type="text" id="in-address" required placeholder="Adresă" style="margin:0">
-                            <button type="button" class="btn-gps" onclick="getLocationForAddress()">
-                                <i class="fas fa-map-marker-alt"></i>
-                            </button>
-                        </div>
-                        <label class="input-label" id="label-start-date">Data Începerii:</label>
-                        <input type="date" id="in-start-date" required>
-                    </div>
-
-                    <div class="card sec-finance">
-                        <h3 id="label-finance"><i class="fas fa-coins"></i> Financiar (€)</h3>
-                        <div class="grid-2">
-                            <div class="input-wrapper">
-                                <label class="micro-label" id="lbl-total">Total</label>
-                                <input type="number" id="in-total" placeholder="0" step="1">
-                            </div>
-                            <div class="input-wrapper">
-                                <label class="micro-label" id="lbl-advance">Avans</label>
-                                <input type="number" id="in-advance" placeholder="0" step="1">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card sec-specs">
-                        <h3 id="label-specs"><i class="fas fa-drafting-compass"></i> Detalii Teren</h3>
-                        <div class="grid-3">
-                            <input type="number" id="in-length" step="0.1" placeholder="L (m)">
-                            <input type="number" id="in-width" step="0.1" placeholder="l (m)">
-                            <input type="number" id="in-slope" step="1" placeholder="Pantă %">
-                        </div>
-                        
-                        <div class="grid-2 mt-15">
-                            <div class="input-wrapper">
-                                <label class="micro-label" id="lbl-area">Suprafață (mp)</label>
-                                <input type="number" id="in-area" step="0.1" placeholder="0">
-                            </div>
-                            <div class="input-wrapper">
-                                <label class="micro-label" id="lbl-perim">Perimetru (ml)</label>
-                                <input type="number" id="in-perim" step="0.1" placeholder="0">
-                            </div>
-                        </div>
-
-                        <div class="grid-2 mt-15">
-                            <div class="input-wrapper">
-                                <label class="micro-label" id="lbl-access">Acces Utilaje</label>
-                                <select id="in-access"></select>
-                            </div>
-                            <div class="input-wrapper">
-                                <label class="micro-label" id="lbl-digging">Tip Săpătură</label>
-                                <select id="in-digging"></select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card sec-mat">
-                        <div class="card-header-row">
-                            <h3 id="label-materials"><i class="fas fa-boxes"></i> Materiale</h3>
-                            <button type="button" class="settings-icon-btn" onclick="openSettingsModal()">
-                                <i class="fas fa-cog"></i>
-                            </button>
-                        </div>
-                        <div class="material-adder-complex">
-                            <div class="input-full">
-                                <input list="dl-materials" id="in-mat-name" autocomplete="off" placeholder="Caută...">
-                                <datalist id="dl-materials"></datalist>
-                            </div>
-                            <div class="input-row-actions">
-                                <input type="number" id="in-mat-qty" class="qty-input" placeholder="Cant.">
-                                <select id="in-mat-unit" class="unit-select"></select>
-                                <button type="button" class="add-btn-icon" onclick="addMaterial()">
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <ul id="mat-list" class="styled-list"></ul>
-                    </div>
-
-                    <div class="card sec-photo">
-                        <h3 id="label-photos"><i class="fas fa-images"></i> Foto</h3>
-                        <div class="upload-area" onclick="document.getElementById('in-photos').click()">
-                            <i class="fas fa-camera"></i>
-                            <p id="label-upload-hint">Atinge pentru poze</p>
-                        </div>
-                        <input type="file" id="in-photos" accept="image/*" multiple hidden>
-                        <div id="photo-previews" class="photo-grid"></div>
-                    </div>
-
-                    <div class="card sec-notes">
-                        <h3 id="label-notes"><i class="fas fa-sticky-note"></i> Note</h3>
-                        <textarea id="in-notes" rows="3" class="modal-textarea" placeholder="..."></textarea>
-                    </div>
-
-                    <div class="form-footer">
-                        <button type="submit" class="save-btn" id="btn-save">SALVEAZĂ</button>
-                    </div>
-                </form>
             </div>
+
+            <!-- Terrain Details -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow border-l-4 border-orange-500">
+                <h2 class="text-lg font-bold text-orange-700 mb-3">Detalii Teren</h2>
+                <div id="terrain-container" class="grid grid-cols-3 gap-2"></div>
+            </div>
+
+            <!-- Materials -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow border-l-4 border-gray-400">
+                <h2 class="text-lg font-bold text-gray-700 dark:text-gray-300 mb-3">Materiale</h2>
+                <ul id="materials-list" class="space-y-2"></ul>
+            </div>
+
+            <!-- Photos -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow border-l-4 border-pink-500">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-lg font-bold text-pink-700">Fotografii</h2>
+                    <span id="photos-count" class="text-xs bg-pink-100 dark:bg-pink-900/50 text-pink-600 dark:text-pink-400 px-2 py-1 rounded-full">0</span>
+                </div>
+                <div id="photos-container" class="grid grid-cols-3 gap-2"></div>
+            </div>
+
+            <!-- Notes -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow border-l-4 border-purple-500">
+                <h2 class="text-lg font-bold text-purple-700 dark:text-purple-400 mb-2">Note</h2>
+                <p id="detail-notes" class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed"></p>
+            </div>
+
+            <!-- Delete -->
+            <button onclick="deleteCurrentProject()" class="w-full py-4 rounded-xl border-2 border-red-200 dark:border-red-800 text-red-500 font-bold flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined">delete_forever</span> Sterge Proiectul
+            </button>
         </main>
+    </div>
 
-        <button class="btn-floating-add" id="fab-add" onclick="showView('form')">
-            <i class="fas fa-plus"></i>
-        </button>
-
-        <div id="modal-details" class="modal-overlay hidden">
-            <div class="modal-content modal-large">
-                <div class="modal-header">
-                    <h2 id="modal-title">Detalii Proiect</h2>
-                    <button class="close-modal-btn" onclick="closeModal()"><i class="fas fa-times"></i></button>
-                </div>
-                <div id="modal-body" class="modal-body-scrollable"></div>
-                <div class="modal-footer-actions">
-                    <button class="btn-pdf-export" onclick="generatePDFForCurrent()"><i class="fas fa-file-pdf"></i> PDF</button>
-                    <button class="btn-save-changes" onclick="saveEditedProject()"><i class="fas fa-save"></i> Salvează</button>
-                </div>
+    <!-- MATERIALS EDITOR MODAL -->
+    <div id="materials-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div class="w-full max-w-sm bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-2xl max-h-[80vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-slate-800 dark:text-slate-200">Editare Materiale</h2>
+                <button onclick="closeMaterialsModal()" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700"><span class="material-symbols-outlined text-slate-600 dark:text-slate-400">close</span></button>
             </div>
-        </div>
-
-        <div id="modal-settings" class="modal-overlay hidden">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2 id="settings-title">Liste</h2>
-                    <button class="close-modal-btn" onclick="closeSettingsModal()"><i class="fas fa-times"></i></button>
-                </div>
-                <div class="modal-body-scrollable">
-                    <h4 id="lbl-manage-mats">Materiale</h4>
-                    <div class="settings-input-group">
-                        <input type="text" id="new-mat-input" placeholder="...">
-                        <button class="btn-add-setting" onclick="addCustomItem('material')"><i class="fas fa-plus"></i></button>
-                    </div>
-                    <ul id="settings-mat-list" class="settings-list"></ul>
-                    <hr class="divider">
-                    <h4 id="lbl-manage-units">Unități</h4>
-                    <div class="settings-input-group">
-                        <input type="text" id="new-unit-input" placeholder="...">
-                        <button class="btn-add-setting" onclick="addCustomItem('unit')"><i class="fas fa-plus"></i></button>
-                    </div>
-                    <ul id="settings-unit-list" class="settings-list"></ul>
-                </div>
-            </div>
-        </div>
-
-        <div id="lightbox-view" class="lightbox hidden">
-            <span class="lightbox-close" onclick="closeLightbox()">×</span>
-            <button class="lightbox-nav-btn btn-prev" onclick="changeLightboxImage(-1)">❮</button>
-            <img id="lightbox-img" src="">
-            <button class="lightbox-nav-btn btn-next" onclick="changeLightboxImage(1)">❯</button>
+            <div id="materials-editor-list" class="space-y-2 mb-4"></div>
+            <button onclick="addNewMaterialRow()" class="w-full py-2 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 text-sm font-bold flex items-center justify-center gap-2 mb-4">
+                <span class="material-symbols-outlined">add</span> Adauga Material
+            </button>
+            <button onclick="saveMaterials()" class="w-full py-3 rounded-xl bg-slate-600 text-white font-bold">Salveaza</button>
         </div>
     </div>
 
-    <script type="module" src="script.js"></script>
+    <!-- MATERIALS LIBRARY MODAL -->
+    <div id="materials-library-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div class="w-full max-w-sm bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-2xl max-h-[80vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-slate-800 dark:text-slate-200">Biblioteca de Materiale</h2>
+                <button onclick="closeMaterialsLibrary()" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700"><span class="material-symbols-outlined text-slate-600 dark:text-slate-400">close</span></button>
+            </div>
+            <div id="materials-library-list" class="space-y-2 mb-4"></div>
+            <button onclick="addNewLibraryMaterial()" class="w-full py-2 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 text-sm font-bold flex items-center justify-center gap-2 mb-4">
+                <span class="material-symbols-outlined">add</span> Adauga Material
+            </button>
+            <button onclick="saveMaterialsLibrary()" class="w-full py-3 rounded-xl bg-slate-600 text-white font-bold">Salveaza</button>
+        </div>
+    </div>
+
+    <!-- EDIT PAGE -->
+    <div id="edit-page" class="hidden min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-800">
+        <header class="sticky top-0 z-50 flex items-center justify-between px-4 py-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200 dark:border-slate-700">
+            <button onclick="cancelEdit()" class="size-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+            <h1 class="font-bold text-slate-800 dark:text-slate-200">Editeaza</h1>
+            <button onclick="saveProject()" class="px-5 py-2 bg-green-500 text-white rounded-full font-bold text-sm">Salveaza</button>
+        </header>
+
+        <main class="p-4 space-y-4">
+            
+            <!-- Client -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow border-l-4 border-blue-500">
+                <h3 class="text-sm font-bold text-blue-600 uppercase mb-3">Client</h3>
+                <div class="space-y-3">
+                    <input id="edit-project-name" type="text" placeholder="Denumire proiect" class="w-full p-3 rounded-xl bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 text-slate-900 dark:text-white">
+                    <input id="edit-client-name" type="text" placeholder="Nume client" class="w-full p-3 rounded-xl bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 text-slate-900 dark:text-white">
+                    <input id="edit-phone" type="tel" placeholder="Telefon" class="w-full p-3 rounded-xl bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 text-slate-900 dark:text-white">
+                    <div class="flex gap-2">
+                        <input id="edit-address" type="text" placeholder="Adresa" class="flex-1 p-3 rounded-xl bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 text-slate-900 dark:text-white">
+                        <button onclick="getGpsAddress()" class="px-4 rounded-xl bg-blue-500 text-white"><span class="material-symbols-outlined">my_location</span></button>
+                    </div>
+                    <p id="gps-status" class="text-xs text-blue-600"></p>
+                    <input id="edit-start-date" type="date" class="w-full p-3 rounded-xl bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 text-slate-900 dark:text-white">
+                </div>
+            </div>
+
+            <!-- Terrain Details -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow border-l-4 border-orange-500">
+                <h3 class="text-sm font-bold text-orange-600 uppercase mb-3">Detalii Teren</h3>
+                <div class="grid grid-cols-3 gap-2">
+                    <input id="edit-lungime" type="number" oninput="calcArea()" placeholder="Lungime" class="p-3 rounded-xl bg-orange-50 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-700 text-slate-900 dark:text-white text-center">
+                    <input id="edit-latime" type="number" oninput="calcArea()" placeholder="Latime" class="p-3 rounded-xl bg-orange-50 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-700 text-slate-900 dark:text-white text-center">
+                    <input id="edit-panta" type="number" placeholder="Panta %" class="p-3 rounded-xl bg-orange-50 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-700 text-slate-900 dark:text-white text-center">
+                </div>
+                <div class="grid grid-cols-3 gap-2 mt-2">
+                    <input id="edit-suprafata" type="number" placeholder="Suprafata mp" class="p-3 rounded-xl bg-orange-50 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-700 text-slate-900 dark:text-white text-center">
+                    <input id="edit-perimeter" type="number" placeholder="Perimetru ml" class="p-3 rounded-xl bg-orange-50 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-700 text-slate-900 dark:text-white text-center">
+                    <select id="edit-machinery" class="p-3 rounded-xl bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-slate-900 dark:text-white text-sm text-center">
+                        <option value="">Acces</option>
+                        <option value="Acces usor">Usor</option>
+                        <option value="Acces mediu">Mediu</option>
+                        <option value="Acces dificil">Dificil</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-3 gap-2 mt-2">
+                    <select id="edit-digging" class="p-3 rounded-xl bg-cyan-50 dark:bg-cyan-900/30 border border-cyan-200 dark:border-cyan-700 text-slate-900 dark:text-white text-center">
+                        <option value="">Sapatura</option>
+                        <option value="Manuala">Manuala</option>
+                        <option value="Mecanizata">Mecanizata</option>
+                        <option value="Mixta">Mixta</option>
+                    </select>
+                    <select id="edit-vegetation" class="p-3 rounded-xl bg-pink-50 dark:bg-pink-900/30 border border-pink-200 dark:border-pink-700 text-slate-900 dark:text-white text-center">
+                        <option value="">Vegetatie</option>
+                        <option value="Fara">Fara</option>
+                        <option value="Iarba">Iarba</option>
+                        <option value="Buruieni">Buruieni</option>
+                        <option value="Arbori">Arbori</option>
+                        <option value="Tufe">Tufe</option>
+                    </select>
+                    <select id="edit-terrain-type" class="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700 text-slate-900 dark:text-white text-center">
+                        <option value="">Tip Teren</option>
+                        <option value="Plana">Plana</option>
+                        <option value="Inclinata">Inclinata</option>
+                        <option value="Abupta">Abupta</option>
+                        <option value="Mixta">Mixta</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Materials Editable -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow border-l-4 border-gray-400">
+                <h2 class="text-lg font-bold text-gray-700 dark:text-gray-300 mb-3">Materiale</h2>
+                <div id="edit-materials-list" class="space-y-2 mb-3"></div>
+                <div class="grid grid-cols-3 gap-2">
+                    <input id="edit-material-name" list="materials-datalist" placeholder="Material" class="p-2 rounded-xl bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white text-sm">
+                    <input id="edit-material-qty" type="number" placeholder="Cant" class="p-2 rounded-xl bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white text-sm text-center">
+                    <select id="edit-material-unit" class="p-2 rounded-xl bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white text-sm">
+                        <option value="buc">buc</option>
+                        <option value="kg">kg</option>
+                        <option value="mp">mp</option>
+                        <option value="ml">ml</option>
+                        <option value="mc">mc</option>
+                        <option value="sac">sac</option>
+                    </select>
+                </div>
+                <button onclick="addEditMaterial()" class="w-full mt-2 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-bold text-sm flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined">add</span> Adauga
+                </button>
+            </div>
+
+            <!-- Notes -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow border-l-4 border-purple-500">
+                <h3 class="text-sm font-bold text-purple-600 uppercase mb-3">Note</h3>
+                <textarea id="edit-notes" rows="4" placeholder="Note..." class="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white"></textarea>
+            </div>
+
+            <!-- Photos (Last) -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow border-l-4 border-pink-500">
+                <h3 class="text-sm font-bold text-pink-600 uppercase mb-3">Fotografii</h3>
+                <div id="edit-photos-container" class="grid grid-cols-3 gap-2"></div>
+                <button onclick="addEditPhoto()" class="w-full mt-3 py-2 rounded-xl border-2 border-dashed border-pink-300 dark:border-pink-700 text-pink-600 dark:text-pink-400 text-sm font-bold flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined">add_a_photo</span> Adauga foto
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <!-- NEW MODAL -->
+    <div id="new-project-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div class="w-full max-w-sm bg-white dark:bg-slate-800 rounded-3xl shadow-2xl overflow-hidden">
+            <div class="bg-gradient-to-r from-green-500 to-green-600 p-6">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-xl font-bold text-white">Proiect Nou</h2>
+                    <button onclick="closeNewProjectModal()" class="p-2 rounded-full hover:bg-white/20"><span class="material-symbols-outlined text-white">close</span></button>
+                </div>
+            </div>
+            <form onsubmit="createQuickProject(event)" class="p-6 space-y-3">
+                <input id="new-client-name" type="text" required placeholder="Nume client" class="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white">
+                <input id="new-project-name" type="text" required placeholder="Denumire proiect" class="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white">
+                <button type="submit" class="w-full py-4 rounded-xl bg-gradient-to-r from-green-500 to-green-600 text-white font-bold text-lg mt-2 shadow-lg shadow-green-500/30">Creeaza</button>
+                <button type="button" onclick="openFullEditForNew()" class="w-full py-3 rounded-xl border-2 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 font-bold text-sm">Completeaza toate datele</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- LIGHTBOX -->
+    <div id="lightbox-container"></div>
+
+    <script src="script.js"></script>
 </body>
 </html>
