@@ -1,0 +1,7 @@
+{
+  "name": "Victor Tigoianu pro",
+  "description": "Integrated Construction Management System featuring Admin Dashboard, Team Tracking, Resource Management, and Mobile Worker Check-in.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
